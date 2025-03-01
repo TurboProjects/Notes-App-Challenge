@@ -79,11 +79,12 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
                         />
                     </div>
                     
-                    <Input
+                    <input
+                        type="text"
                         placeholder="Enter name"
                         value={categoryName}
                         onChange={(e) => setCategoryName(e.target.value)}
-                        className="mb-4"
+                        className="mb-4 border border-[#957139] rounded-md w-full bg-transparent px-3 py-2"
                     />
 
                     <div className="flex justify-between mb-6 p-4 border border-[#957139] rounded-md">
