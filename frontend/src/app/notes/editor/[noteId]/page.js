@@ -70,7 +70,7 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
         >
             <div className="fixed inset-0 bg-black bg-opacity-50" />
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-                <div className="relative bg-[#FAF1E3] p-6 rounded-lg shadow-lg w-[400px]">
+                <div className="relative bg-[#FAF1E3] p-6 rounded-lg shadow-lg w-[425px]">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold">Create New Category</h2>
                         <X 
@@ -90,7 +90,7 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
                         {colors.map((color) => (
                             <div
                                 key={color}
-                                className={`w-8 h-8 rounded-full cursor-pointer transition-transform ${
+                                className={`w-5 h-5 rounded-full cursor-pointer transition-transform ${
                                     selectedColor === color ? 'scale-110 ring-2 ring-offset-2 ring-[#957139]' : ''
                                 }`}
                                 style={{ backgroundColor: color }}
