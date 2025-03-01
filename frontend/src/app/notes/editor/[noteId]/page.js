@@ -29,9 +29,11 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
                 </SelectItem>
             ))}
             <hr className="my-1 border-t border-[#957139]"></hr>
-            <SelectItem>
+            <div className="cursor-pointer text-sm ml-3" onClick={() => {
+                console.log("create new category")
+            }}>
                 + Create New Category
-            </SelectItem>
+            </div>
         </SelectContent>
     </Select>
 )
