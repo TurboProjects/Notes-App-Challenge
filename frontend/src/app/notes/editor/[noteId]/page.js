@@ -14,29 +14,33 @@ import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
 
 
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
-    <Select value={categoryId} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
-            <SelectValue placeholder="Select Category" />
-        </SelectTrigger>
-        <SelectContent>
-            {categories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center">
-                        <Circle className="w-4 h-4 mr-2" fill={category.color} strokeWidth={0} />
-                        {category.name}
-                    </div>
-                </SelectItem>
-            ))}
-            <hr className="my-1 border-t border-[#957139]"></hr>
-            <div className="cursor-pointer text-sm ml-3 py-1" onClick={() => {
-                console.log("create new category")
-            }}>
-                + Create New Category
-            </div>
-        </SelectContent>
-    </Select>
-)
+const CategorySelector = ({ categories, categoryId, onCategoryChange }) => {
+    const [openModalAddCategory, setOpenModalAddCategory] = useState(false)
+
+    return (
+        <Select value={categoryId} onValueChange={onCategoryChange}>
+            <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
+                <SelectValue placeholder="Select Category" />
+            </SelectTrigger>
+            <SelectContent>
+                {categories.map(category => (
+                    <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center">
+                            <Circle className="w-4 h-4 mr-2" fill={category.color} strokeWidth={0} />
+                            {category.name}
+                        </div>
+                    </SelectItem>
+                ))}
+                <hr className="my-1 border-t border-[#957139]"></hr>
+                <div className="cursor-pointer text-sm ml-3 py-1" onClick={() => {
+                    setOpenModalAddCategory(true)
+                }}>
+                    + Create New Category
+                </div>
+            </SelectContent>
+        </Select> 
+    )
+}
 
 const CloseButton = () => {
     const router = useRouter()
