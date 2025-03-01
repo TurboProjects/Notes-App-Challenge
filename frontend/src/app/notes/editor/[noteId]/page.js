@@ -40,7 +40,7 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange, setOpenMod
     )
 }
 
-const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory, categories, setCategories }) => {
+const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory, categories, setCategories, setCategoryId }) => {
     const [categoryName, setCategoryName] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
     const { toast } = useToast()
@@ -72,8 +72,10 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory, cate
                 throw new Error('Failed to create category')    
             }
             const data = await response.json()
-            console.log("data", data)
             setCategories([...categories, data])
+            setCategoryId(data.id)
+            setCategoryName('')
+            setSelectedColor('')
             setOpenModalAddCategory(false)
             toast({ title: "Category created successfully", variant: "success" })
         } catch (error) {
@@ -88,6 +90,8 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory, cate
             className="bg-transparent"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
+                    setCategoryName('')
+                    setSelectedColor('')
                     setOpenModalAddCategory(false)
                 }
             }}
@@ -340,7 +344,7 @@ const NoteEditorPage = () => {
                     isSaving={isSaving}
                 />
             </div>
-            <AddCategoryDialog openModalAddCategory={openAddCategoryDialog} setOpenModalAddCategory={setOpenAddCategoryDialog} categories={categories} setCategories={setCategories} />
+            <AddCategoryDialog openModalAddCategory={openAddCategoryDialog} setOpenModalAddCategory={setOpenAddCategoryDialog} categories={categories} setCategories={setCategories} setCategoryId={setCategoryId} />
         </div>
     )
 }
