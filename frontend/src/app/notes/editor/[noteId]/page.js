@@ -101,7 +101,7 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
                     </div>
 
                     <button
-                        className="w-full bg-[#957139] text-white py-2 rounded-md hover:bg-[#7d5f30] transition-colors"
+                        className="p-3 bg-[#957139] text-[#FAFAFA] rounded-md hover:bg-[#000] transition-colors"
                         onClick={handleSubmit}
                     >
                         Create Category
