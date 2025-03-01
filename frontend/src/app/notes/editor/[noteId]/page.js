@@ -45,12 +45,12 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
     const [selectedColor, setSelectedColor] = useState('')
     
     const colors = [
-        '#C27C4A',  // brown
-        '#E6B325',  // yellow
-        '#9CAF88',  // sage green
-        '#6A8E7F',  // teal
-        '#E67373',  // pink
-        '#9B8AA6',  // purple
+        '#EF9C66',  
+        '#FCDC94',
+        '#C8CFA0',  
+        '#78ABA8',  
+        '#FF9E9E',  
+        '#C0ACD0',  
     ]
 
     const handleSubmit = () => {
