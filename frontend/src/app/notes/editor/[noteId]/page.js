@@ -13,7 +13,7 @@ import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
 
-const CategorySelector = ({ categories, categoryId, onCategoryChange, openModalAddCategory, setOpenModalAddCategory }) => {
+const CategorySelector = ({ categories, categoryId, onCategoryChange, setOpenModalAddCategory }) => {
 
     return (
         <Select value={categoryId} onValueChange={onCategoryChange}>
@@ -40,13 +40,71 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange, openModalA
     )
 }
 
-const ModalAddCategory = ({ openModalAddCategory, setOpenModalAddCategory }) => {
+const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) => {
+    const [categoryName, setCategoryName] = useState('')
+    const [selectedColor, setSelectedColor] = useState('')
+    
+    const colors = [
+        '#C27C4A',  // brown
+        '#E6B325',  // yellow
+        '#9CAF88',  // sage green
+        '#6A8E7F',  // teal
+        '#E67373',  // pink
+        '#9B8AA6',  // purple
+    ]
+
+    const handleSubmit = () => {
+        // TODO: Add API call to create category
+        setOpenModalAddCategory(false)
+    }
+
     return (
-        <dialog open={openModalAddCategory} onOpenChange={setOpenModalAddCategory}>
-            <div className="fixed inset-0 bg-black bg-opacity-50"></div>
+        <dialog 
+            open={openModalAddCategory} 
+            className="bg-transparent"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    setOpenModalAddCategory(false)
+                }
+            }}
+        >
+            <div className="fixed inset-0 bg-black bg-opacity-50" />
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-                <div className="bg-white p-8 rounded-lg shadow-lg">
-                    <h2 className="text-2xl font-bold mb-4">Add New Category</h2>
+                <div className="relative bg-[#FAF1E3] p-6 rounded-lg shadow-lg w-[400px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold">Create New Category</h2>
+                        <X 
+                            className="w-6 h-6 cursor-pointer text-gray-500" 
+                            onClick={() => setOpenModalAddCategory(false)}
+                        />
+                    </div>
+                    
+                    <Input
+                        placeholder="Enter name"
+                        value={categoryName}
+                        onChange={(e) => setCategoryName(e.target.value)}
+                        className="mb-4"
+                    />
+
+                    <div className="flex justify-between mb-6">
+                        {colors.map((color) => (
+                            <div
+                                key={color}
+                                className={`w-8 h-8 rounded-full cursor-pointer transition-transform ${
+                                    selectedColor === color ? 'scale-110 ring-2 ring-offset-2 ring-[#957139]' : ''
+                                }`}
+                                style={{ backgroundColor: color }}
+                                onClick={() => setSelectedColor(color)}
+                            />
+                        ))}
+                    </div>
+
+                    <button
+                        className="w-full bg-[#957139] text-white py-2 rounded-md hover:bg-[#7d5f30] transition-colors"
+                        onClick={handleSubmit}
+                    >
+                        Create Category
+                    </button>
                 </div>
             </div>
         </dialog>
@@ -65,9 +123,9 @@ const CloseButton = () => {
     )
 }
 
-const Header = ({ categories, categoryId, onCategoryChange, openModalAddCategory, setOpenModalAddCategory }) => (
+const Header = ({ categories, categoryId, onCategoryChange, setOpenModalAddCategory }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} openModalAddCategory={openModalAddCategory} setOpenModalAddCategory={setOpenModalAddCategory} />
+        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} setOpenModalAddCategory={setOpenModalAddCategory} />
         <CloseButton />
     </header>
 )
@@ -110,7 +168,7 @@ const NoteEditorPage = () => {
     const [lastEdited, setLastEdited] = useState(null)
     const [version, setVersion] = useState(null)
     const [isSaving, setIsSaving] = useState(false)
-    const [openModalAddCategory, setOpenModalAddCategory] = useState(false)
+    const [openAddCategoryDialog, setOpenAddCategoryDialog] = useState(false)
     const params = useParams()
     const noteId = params.noteId
 
@@ -242,7 +300,7 @@ const NoteEditorPage = () => {
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} openModalAddCategory={openModalAddCategory} setOpenModalAddCategory={setOpenModalAddCategory} />
+                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} setOpenModalAddCategory={setOpenAddCategoryDialog} />
             </div>
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard
@@ -255,7 +313,7 @@ const NoteEditorPage = () => {
                     isSaving={isSaving}
                 />
             </div>
-            <ModalAddCategory openModalAddCategory={openModalAddCategory} setOpenModalAddCategory={setOpenModalAddCategory} />
+            <AddCategoryDialog openModalAddCategory={openAddCategoryDialog} setOpenModalAddCategory={setOpenAddCategoryDialog} />
         </div>
     )
 }
