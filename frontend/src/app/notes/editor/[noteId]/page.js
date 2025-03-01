@@ -86,11 +86,11 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
                         className="mb-4"
                     />
 
-                    <div className="flex justify-between mb-6">
+                    <div className="flex justify-between mb-6 p-4 border border-[#957139] rounded-md">
                         {colors.map((color) => (
                             <div
                                 key={color}
-                                className={`w-5 h-5 rounded-full cursor-pointer transition-transform ${
+                                className={`w-4 h-4 rounded-full cursor-pointer transition-transform ${
                                     selectedColor === color ? 'scale-110 ring-2 ring-offset-2 ring-[#957139]' : ''
                                 }`}
                                 style={{ backgroundColor: color }}
