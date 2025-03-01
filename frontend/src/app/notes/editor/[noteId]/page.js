@@ -40,10 +40,12 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange, setOpenMod
     )
 }
 
-const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) => {
+const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory, categories, setCategories }) => {
     const [categoryName, setCategoryName] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
-    
+    const { toast } = useToast()
+    const { getToken } = useAuth()
+
     const colors = [
         '#EF9C66',  
         '#FCDC94',
@@ -53,9 +55,31 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
         '#C0ACD0',  
     ]
 
-    const handleSubmit = () => {
-        // TODO: Add API call to create category
-        setOpenModalAddCategory(false)
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/categories/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color: selectedColor,
+                }),
+            })
+            if (!response.ok) {
+                throw new Error('Failed to create category')    
+            }
+            const data = await response.json()
+            console.log("data", data)
+            setCategories([...categories, data])
+            setOpenModalAddCategory(false)
+            toast({ title: "Category created successfully", variant: "success" })
+        } catch (error) {
+            console.error('Create category error:', error)
+            toast({ title: "Failed to create category", variant: "destructive" })
+        }
     }
 
     return (
@@ -316,7 +340,7 @@ const NoteEditorPage = () => {
                     isSaving={isSaving}
                 />
             </div>
-            <AddCategoryDialog openModalAddCategory={openAddCategoryDialog} setOpenModalAddCategory={setOpenAddCategoryDialog} />
+            <AddCategoryDialog openModalAddCategory={openAddCategoryDialog} setOpenModalAddCategory={setOpenAddCategoryDialog} categories={categories} setCategories={setCategories} />
         </div>
     )
 }
