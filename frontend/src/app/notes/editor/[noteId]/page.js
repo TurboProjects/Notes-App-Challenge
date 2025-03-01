@@ -28,6 +28,10 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
                     </div>
                 </SelectItem>
             ))}
+            <hr className="my-1 border-t border-[#957139]"></hr>
+            <SelectItem>
+                + Create New Category
+            </SelectItem>
         </SelectContent>
     </Select>
 )
