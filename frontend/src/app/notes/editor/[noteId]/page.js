@@ -99,13 +99,14 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory }) =>
                             />
                         ))}
                     </div>
-
-                    <button
-                        className="p-3 bg-[#957139] text-[#FAFAFA] rounded-md hover:bg-[#000] transition-colors"
-                        onClick={handleSubmit}
-                    >
-                        Create Category
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            className="p-3 bg-[#957139] text-[#FAFAFA] rounded-md hover:bg-[#000] transition-colors"
+                            onClick={handleSubmit}
+                        >
+                            Create Category
+                        </button>
+                    </div>
                 </div>
             </div>
         </dialog>
