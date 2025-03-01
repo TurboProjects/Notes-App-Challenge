@@ -125,7 +125,7 @@ const AddCategoryDialog = ({ openModalAddCategory, setOpenModalAddCategory, cate
                     </div>
                     <div className="flex justify-end">
                         <button
-                            className="p-3 bg-[#957139] text-[#FAFAFA] rounded-md hover:bg-[#000] transition-colors"
+                            className="p-3 bg-[#957139] text-[#FAFAFA] rounded-md hover:bg-[#000] transition-colors disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed"
                             onClick={handleSubmit}
                             disabled={!categoryName || !selectedColor}
                         >
