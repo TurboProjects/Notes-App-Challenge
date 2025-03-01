@@ -13,9 +13,7 @@ import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
 
-
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => {
-    const [openModalAddCategory, setOpenModalAddCategory] = useState(false)
+const CategorySelector = ({ categories, categoryId, onCategoryChange, openModalAddCategory, setOpenModalAddCategory }) => {
 
     return (
         <Select value={categoryId} onValueChange={onCategoryChange}>
@@ -42,6 +40,19 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange }) => {
     )
 }
 
+const ModalAddCategory = ({ openModalAddCategory, setOpenModalAddCategory }) => {
+    return (
+        <dialog open={openModalAddCategory} onOpenChange={setOpenModalAddCategory}>
+            <div className="fixed inset-0 bg-black bg-opacity-50"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <div className="bg-white p-8 rounded-lg shadow-lg">
+                    <h2 className="text-2xl font-bold mb-4">Add New Category</h2>
+                </div>
+            </div>
+        </dialog>
+    )
+}
+
 const CloseButton = () => {
     const router = useRouter()
     return (
@@ -54,9 +65,9 @@ const CloseButton = () => {
     )
 }
 
-const Header = ({ categories, categoryId, onCategoryChange }) => (
+const Header = ({ categories, categoryId, onCategoryChange, openModalAddCategory, setOpenModalAddCategory }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} />
+        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} openModalAddCategory={openModalAddCategory} setOpenModalAddCategory={setOpenModalAddCategory} />
         <CloseButton />
     </header>
 )
@@ -99,6 +110,7 @@ const NoteEditorPage = () => {
     const [lastEdited, setLastEdited] = useState(null)
     const [version, setVersion] = useState(null)
     const [isSaving, setIsSaving] = useState(false)
+    const [openModalAddCategory, setOpenModalAddCategory] = useState(false)
     const params = useParams()
     const noteId = params.noteId
 
@@ -230,7 +242,7 @@ const NoteEditorPage = () => {
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} />
+                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} openModalAddCategory={openModalAddCategory} setOpenModalAddCategory={setOpenModalAddCategory} />
             </div>
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard
@@ -243,6 +255,7 @@ const NoteEditorPage = () => {
                     isSaving={isSaving}
                 />
             </div>
+            <ModalAddCategory openModalAddCategory={openModalAddCategory} setOpenModalAddCategory={setOpenModalAddCategory} />
         </div>
     )
 }
