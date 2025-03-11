@@ -30,7 +30,6 @@ class Command(BaseCommand):
                     name=category["name"],
                     color=category["color"]
                 )
-            return True
+            self.stdout.write(self.style.SUCCESS("Default categories created successfully!"))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Failed to create default categories: {str(e)}"))
-            return False
