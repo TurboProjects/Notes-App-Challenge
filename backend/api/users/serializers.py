@@ -79,13 +79,19 @@ class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for Category model
     """
-
     note_count = serializers.ReadOnlyField()
 
     class Meta:
         model = Category
         fields = ('id', 'name', 'color', 'note_count')
         read_only_fields = ('id', 'note_count')
+
+    def validate(self, data):
+        if not data.get('name'):
+            raise serializers.ValidationError({'name': 'Name is required'})
+        if not data.get('color'):
+            raise serializers.ValidationError({'color': 'Color is required'})
+        return data
 
     def create(self, validated_data):
         """
