@@ -29,11 +29,12 @@ const formSchema = z.object({
 const CatIllustration = () => (
   <div className="mb-8 flex justify-center">
     <Image
-      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/607db823-27ff-4598-8013-bbdc9f17d267"
+      src="cat.png"
       alt="Cute sleeping cat illustration"
       width={192}
       height={192}
       className="w-48 h-auto"
+      unoptimized
     />
   </div>
 )

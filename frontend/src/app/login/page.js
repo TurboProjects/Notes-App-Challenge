@@ -30,11 +30,12 @@ const formSchema = z.object({
 const CactusIllustration = () => (
   <div className="mb-6 flex justify-center">
     <Image
-      src="https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/0964f8be-0f2f-4467-a2d1-06f6e58cddfe"
+      src="cactus.png"
       alt="Cute cactus illustration"
       width={96}
       height={112}
       className="w-24 h-28"
+      unoptimized
     />
   </div>
 )
