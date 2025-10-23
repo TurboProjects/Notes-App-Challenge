@@ -6,8 +6,8 @@ from django.views import defaults as default_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
-from api.users.views import UserViewSet, RegistrationView, CategoryViewSet
-from api.notes.views import NoteViewSet  # Add this import
+from api.users.views import UserViewSet, RegistrationView
+from api.notes.views import NoteViewSet, CategoryViewSet
 
 urlpatterns = [
     # Django Admin

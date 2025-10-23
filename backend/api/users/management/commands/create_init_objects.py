@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from api.users.models import Category
+from api.notes.models import Category
 
 class Command(BaseCommand):
     help = "Creates a superuser with a predefined password (for testing only)."

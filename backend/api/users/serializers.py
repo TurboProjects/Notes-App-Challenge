@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
-from api.users.models import User, Profile, Category
+from api.users.models import User, Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -73,23 +73,3 @@ class CreateUserSerializer(serializers.ModelSerializer):
         validated_data['username'] = validated_data.get('email')
         user = User.objects.create_user(**validated_data)
         return user
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    """
-    Serializer for Category model
-    """
-
-    note_count = serializers.ReadOnlyField()
-
-    class Meta:
-        model = Category
-        fields = ('id', 'name', 'color', 'note_count')
-        read_only_fields = ('id', 'note_count')
-
-    def create(self, validated_data):
-        """
-        Create category with authenticated user
-        """
-        return super().create(validated_data)
-

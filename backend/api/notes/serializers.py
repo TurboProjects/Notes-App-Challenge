@@ -1,7 +1,25 @@
 from rest_framework import serializers
-from api.notes.models import Note
-from api.users.models import Category
-from api.users.serializers import CategorySerializer
+from api.notes.models import Note, Category
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for Category model
+    """
+
+    note_count = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Category
+        fields = ('id', 'name', 'color', 'note_count')
+        read_only_fields = ('id', 'note_count')
+
+    def create(self, validated_data):
+        """
+        Create category with authenticated user
+        """
+        return super().create(validated_data)
+
 
 class NoteSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)

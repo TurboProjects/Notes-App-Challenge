@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .permissions import IsUserOrReadOnly, IsOwnerOrReadOnly
-from .serializers import CreateUserSerializer, UserSerializer, CategorySerializer
+from .serializers import CreateUserSerializer, UserSerializer
 
-from .models import User, Category
+from .models import User
 
 
 class UserViewSet(mixins.RetrieveModelMixin,
@@ -72,18 +72,3 @@ class RegistrationView(APIView):
             {'errors': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-
-class CategoryViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for viewing and editing categories.
-    """
-    serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
-
-    def get_queryset(self):
-        """
-        Filter queryset to return only user's categories.
-        """
-        return Category.objects.all()

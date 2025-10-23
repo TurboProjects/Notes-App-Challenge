@@ -97,7 +97,7 @@ class NoteCategoryFilterTests(APITestCase):
         self.user = UserFactory()
         self.category = CategoryFactory()
         self.other_category = CategoryFactory()
-        
+
         # Create notes for testing
         self.notes_in_category = []
         for i in range(3):
@@ -148,7 +148,7 @@ class NoteCategoryFilterTests(APITestCase):
                 category=self.category,
                 title=f"Pagination test note {i}"
             )
-        
+
         response = self.client.get(f"{self.url}?category_id={self.category.id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 20)  # Default page size

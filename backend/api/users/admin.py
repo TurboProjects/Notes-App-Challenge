@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from .models import User, Profile
-from api.users.models import Category
 
 
 class ProfileInline(admin.StackedInline):
@@ -21,11 +20,3 @@ class UserAdmin(DefaultUserAdmin):
     """
     inlines = (ProfileInline,)
     list_display = ('email', 'first_name', 'last_name', 'is_staff')
-
-
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'color')
-    list_filter = ()
-    search_fields = ('name',)
-    ordering = ('name',)

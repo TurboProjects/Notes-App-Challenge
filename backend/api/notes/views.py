@@ -2,10 +2,9 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from api.notes.models import Note
-from api.notes.serializers import NoteSerializer
+from api.notes.models import Note, Category
+from api.notes.serializers import NoteSerializer, CategorySerializer
 from api.users.permissions import IsOwnerOrReadOnly
-from api.users.models import Category
 
 class NoteViewSet(viewsets.ModelViewSet):
     """
@@ -40,3 +39,18 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for viewing and editing categories.
+    """
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        """
+        Filter queryset to return only user's categories.
+        """
+        return Category.objects.all()
