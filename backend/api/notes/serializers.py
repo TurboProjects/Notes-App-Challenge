@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 from api.notes.models import Note, Category
 
@@ -14,11 +15,18 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'color', 'note_count')
         read_only_fields = ('id', 'note_count')
 
+    def validate_name(self, value):
+        user = self.context['request'].user
+        if Category.objects.filter(Q(name=value, user=user) | Q(name=value, user=None)).exists():
+            raise serializers.ValidationError("Category with this name already exists")
+        return value
+
     def create(self, validated_data):
         """
         Create category with authenticated user
         """
-        return super().create(validated_data)
+        user = self.context['request'].user
+        return Category.objects.create(user=user,**validated_data)
 
 
 class NoteSerializer(serializers.ModelSerializer):

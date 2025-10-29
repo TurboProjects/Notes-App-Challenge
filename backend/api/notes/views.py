@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
@@ -53,4 +54,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        return Category.objects.filter(Q(user=self.request.user) | Q(user=None))
+
+    def perform_create(self, serializer):
+        return super().perform_create(serializer)
