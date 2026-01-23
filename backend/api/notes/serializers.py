@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from api.notes.models import Note, Category
+from 
 
 
 class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for Category model
     """
-    note_count = serializers.serializerMethodField()
+    note_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
