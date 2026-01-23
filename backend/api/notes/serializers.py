@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from api.notes.models import Note, Category
-from 
 
 
 class CategorySerializer(serializers.ModelSerializer):
