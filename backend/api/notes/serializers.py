@@ -6,8 +6,7 @@ class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for Category model
     """
-
-    note_count = serializers.ReadOnlyField()
+    note_count = serializers.serializerMethodField()
 
     class Meta:
         model = Category
@@ -19,6 +18,12 @@ class CategorySerializer(serializers.ModelSerializer):
         Create category with authenticated user
         """
         return super().create(validated_data)
+    
+    def get_note_count(self, obj):
+        user = self.context['request'].user if 'request' in self.context else None
+        if user is None:
+            return 0
+        return obj.notes.filter(user=user).count()
 
 
 class NoteSerializer(serializers.ModelSerializer):
