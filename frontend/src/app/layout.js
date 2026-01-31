@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthProvider";
 import { Toaster } from '@/components/ui/toaster'
+import CactusController from '@/components/ui/cactus-controller'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           {children}
           <Toaster />
+          <CactusController />
         </AuthProvider>
       </body>
     </html>

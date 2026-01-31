@@ -30,15 +30,14 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-      # Don't mount node_modules and .next to avoid conflicts
-      - /app/node_modules
-      - /app/.next
+      - ./frontend/node_modules:/app/node_modules
+      - ./frontend/.next:/app/.next
     ports:
       - '${FRONTEND_PORT:-3000}:3000'
     command: "npm run dev"
 
   postgres:
-    image: docker.io/postgres:16
+    image: pgvector/pgvector:pg16
     container_name: 679403a7__notes-app_backend_postgres
     volumes:
       - 679403a7__notes-app_backend_postgres_data:/var/lib/postgresql/data

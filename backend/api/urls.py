@@ -8,6 +8,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 from api.users.views import UserViewSet, RegistrationView
 from api.notes.views import NoteViewSet, CategoryViewSet
+from api.ai.views import QueryAPIView
 
 urlpatterns = [
     # Django Admin
@@ -24,6 +25,7 @@ router.register(r'notes', NoteViewSet, basename='note')
 # API URLS
 urlpatterns += [
     path('api/v1/', include(router.urls)),
+    path('api/v1/ai/query/', QueryAPIView.as_view()),
     path('api/auth/register/', RegistrationView.as_view(), name='register'),
     path("api/auth-token/", obtain_auth_token),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),

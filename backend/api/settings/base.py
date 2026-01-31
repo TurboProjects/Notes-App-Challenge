@@ -88,6 +88,8 @@ LOCAL_APPS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
+INSTALLED_APPS += ["pgvector.django", "api.ai"]
+
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
@@ -273,6 +275,13 @@ CORS_URLS_REGEX = r"^/api/.*$"
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_BASE_URL,
 ]
+
+# OpenAI (RAG summarization)
+# -------------------------------------------------------------------------------
+# Set OPENAI_API_KEY in .envs/.local/.django (or env) so the AI query endpoint
+# returns LLM-generated summaries instead of concatenated chunks.
+OPENAI_API_KEY = env("OPENAI_API_KEY", default=None)
+OPENAI_MODEL = env("OPENAI_MODEL", default="gpt-3.5-turbo")
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
