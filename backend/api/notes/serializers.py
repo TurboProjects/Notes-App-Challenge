@@ -70,3 +70,17 @@ class NoteSerializer(serializers.ModelSerializer):
         instance.content = validated_data.get('content', instance.content)
         instance.save()
         return instance
+
+
+class AIAssistantRequestSerializer(serializers.Serializer):
+    query = serializers.CharField(max_length=1000)
+
+
+class NoteReferenceSerializer(serializers.Serializer):
+    note_id = serializers.IntegerField()
+    note_title = serializers.CharField()
+
+
+class AIAssistantResponseSerializer(serializers.Serializer):
+    response = serializers.CharField()
+    references = NoteReferenceSerializer(many=True)

@@ -1,6 +1,8 @@
 volumes:
   679403a7__notes-app_backend_postgres_data: {}
   679403a7__notes-app_backend_postgres_data_backups: {}
+  679403a7__notes-app_backend_redis_data: {}
+  679403a7__notes-app_backend_celery_data: {}
 
 services:
   backend:
@@ -16,6 +18,8 @@ services:
     env_file:
       - ./backend/.envs/.local/.django
       - ./backend/.envs/.local/.postgres
+      - ./backend/.envs/.local/.redis
+      - ./backend/.envs/.local/.celery
     ports:
       - '${BACKEND_PORT:-8000}:8000'
     command: /start
@@ -38,10 +42,36 @@ services:
     command: "npm run dev"
 
   postgres:
-    image: docker.io/postgres:16
+    image: pgvector/pgvector:0.8.1-pg18-trixie
     container_name: 679403a7__notes-app_backend_postgres
     volumes:
-      - 679403a7__notes-app_backend_postgres_data:/var/lib/postgresql/data
+      - 679403a7__notes-app_backend_postgres_data:/var/lib/postgresql
       - 679403a7__notes-app_backend_postgres_data_backups:/backups
     env_file:
       - ./backend/.envs/.local/.postgres
+
+  redis:
+    image: redis:7.4.1-alpine
+    container_name: 679403a7__notes-app_backend_redis
+    volumes:
+      - 679403a7__notes-app_backend_redis_data:/data
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: ./compose/Dockerfile
+    image: 679403a7__notes-app_backend_celery
+    container_name: 679403a7__notes-app_backend_celery
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.envs/.local/.django
+      - ./backend/.envs/.local/.redis
+      - ./backend/.envs/.local/.postgres
+      - ./backend/.envs/.local/.celery
+    command: celery -A api.worker.celery worker --loglevel=info
