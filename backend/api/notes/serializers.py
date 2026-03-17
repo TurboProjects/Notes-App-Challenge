@@ -41,6 +41,11 @@ class NoteSerializer(serializers.ModelSerializer):
     def validate_category_id(self, value):
         try:
             category = Category.objects.get(id=value)
+
+            request = self.context.get('request')
+            if category.user is not None and category.user != request.user:
+                raise serializers.ValidationError("You don't have permission to use this category")
+
             return value
         except Category.DoesNotExist:
             raise serializers.ValidationError("Invalid category ID")
@@ -59,6 +64,13 @@ class NoteSerializer(serializers.ModelSerializer):
             category_id = validated_data.pop('category_id')
             try:
                 category = Category.objects.get(id=category_id)
+
+                request = self.context.get('request')
+                if category.user is not None and category.user != request.user:
+                    raise serializers.ValidationError({
+                        "category_id": "You don't have permission to use this category"
+                    })
+
                 instance.category = category
             except Category.DoesNotExist:
                 raise serializers.ValidationError({
