@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from api.notes.models import Note, Category
 
-
 class CategorySerializer(serializers.ModelSerializer):
     """
     Serializer for Category model
@@ -13,12 +12,12 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'color', 'note_count')
         read_only_fields = ('id', 'note_count')
 
-    def create(self, validated_data):
-        """
-        Create category with authenticated user
-        """
-        return super().create(validated_data)
-    
+    def validate_name(self, value):
+        user = self.context['request'].user
+        if Category.objects.filter(user=user, name=value).exists():
+            raise serializers.ValidationError("A category with this name already exists.")
+        return value
+
     def get_note_count(self, obj):
         user = self.context['request'].user if 'request' in self.context else None
         if user is None:
@@ -39,15 +38,15 @@ class NoteSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at', 'user_id')
 
     def validate_category_id(self, value):
-        try:
-            category = Category.objects.get(id=value)
-            return value
-        except Category.DoesNotExist:
+        user = self.context['request'].user if 'request' in self.context else None
+
+        if not Category.objects.visible_to(user).filter(id=value).exists():
             raise serializers.ValidationError("Invalid category ID")
+        return value
 
     def create(self, validated_data):
         category_id = validated_data.pop('category_id')
-        category = Category.objects.get(id=category_id)
+        category = Category.objects.visible_to(self.context['request'].user).get(id=category_id)
         return Note.objects.create(
             category=category,
             **validated_data
@@ -58,7 +57,9 @@ class NoteSerializer(serializers.ModelSerializer):
         if 'category_id' in validated_data:
             category_id = validated_data.pop('category_id')
             try:
-                category = Category.objects.get(id=category_id)
+                user = self.context['request'].user if 'request' in self.context else None
+
+                category = Category.objects.visible_to(user).get(id=category_id)
                 instance.category = category
             except Category.DoesNotExist:
                 raise serializers.ValidationError({

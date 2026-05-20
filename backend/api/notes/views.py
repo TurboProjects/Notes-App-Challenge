@@ -23,13 +23,15 @@ class NoteViewSet(viewsets.ModelViewSet):
         optionally filtered by category_id, ordered by last updated.
         """
         queryset = Note.objects.filter(user=self.request.user)
-        
+
         category_id = self.request.query_params.get('category_id', None)
         if category_id is not None:
             # Verify category exists and belongs to user
-            category = get_object_or_404(Category, id=category_id)
+            category = get_object_or_404(
+                Category.objects.visible_to(self.request.user),
+                id=category_id)
             queryset = queryset.filter(category=category)
-        
+
         return queryset.order_by('-updated_at')
 
     def get_object(self):
@@ -53,4 +55,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        user_categories = Category.objects.visible_to(self.request.user)
+        return user_categories
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

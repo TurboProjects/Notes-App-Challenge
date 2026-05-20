@@ -1,9 +1,13 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
+from django.db.models import Q
 from api.notes.validators import validate_hex_color
 
+class CategoryQuerySet(models.QuerySet):
+    def visible_to(self, user):
+        # Optimized query: filter global + user categories
+        return self.filter(Q(user__isnull=True) | Q(user=user))
 
 class Category(models.Model):
     """
@@ -14,10 +18,33 @@ class Category(models.Model):
         max_length=7,
         validators=[validate_hex_color]
     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='categories',
+        null=True,
+        blank=True,
+    )
+    # Use the custom manager to filter categories based on user
+    objects = CategoryQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = 'Categories'
         ordering = ['name']
+        constraints = [
+            # Contraint to avoid duplicate category names for same user
+            models.UniqueConstraint(
+                fields=['user', 'name'],
+                name='uniq_category_name_per_user',
+                condition=Q(user__isnull=False),
+            ),
+            # Contraint to avoid duplicate names in global categories
+            models.UniqueConstraint(
+                fields=['name'],
+                name='uniq_global_category_name',
+                condition=Q(user__isnull=True),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.name}"
