@@ -7,14 +7,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Circle, X } from 'lucide-react'
+import { Circle, X, PlusIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
+import NewCategoryDialog from '@/components/NewCategoryDialog';
 
 
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
+const CategorySelector = ({ categories, categoryId, onOpenNewCategory, onCategoryChange }) => (
     <Select value={categoryId} onValueChange={onCategoryChange}>
         <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
             <SelectValue placeholder="Select Category" />
@@ -28,6 +29,16 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
                     </div>
                 </SelectItem>
             ))}
+            <div className='border-b-[1px] border-[#95715e]'></div>
+
+            <button
+                type="button"
+                className='inline-flex items-center p-2 text-sm w-full hover:bg-[#e8d9c0]'
+                onMouseDown={(e) => { e.preventDefault(); onOpenNewCategory() }}
+            >
+                <PlusIcon className="w-4 h-4 mr-2" />
+                Create New Category
+            </button>
         </SelectContent>
     </Select>
 )
@@ -44,9 +55,9 @@ const CloseButton = () => {
     )
 }
 
-const Header = ({ categories, categoryId, onCategoryChange }) => (
+const Header = ({ categories, categoryId, onCategoryChange, onOpenNewCategory }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} />
+        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} onOpenNewCategory={onOpenNewCategory} />
         <CloseButton />
     </header>
 )
@@ -184,6 +195,12 @@ const NoteEditorPage = () => {
     // categories
     const [categories, setCategories] = useState([])
     const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+    const [isNewCategoryOpen, setIsNewCategoryOpen] = useState(false)
+
+    const handleCategoryCreated = (newCategory) => {
+        setCategories(prev => [...prev, newCategory])
+        setCategoryId(newCategory.id)
+    }
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -220,8 +237,13 @@ const NoteEditorPage = () => {
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} />
+                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} onOpenNewCategory={() => setIsNewCategoryOpen(true)} />
             </div>
+            <NewCategoryDialog
+                open={isNewCategoryOpen}
+                onOpenChange={setIsNewCategoryOpen}
+                onCreated={handleCategoryCreated}
+            />
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard
                     color={currentCategoryColor}

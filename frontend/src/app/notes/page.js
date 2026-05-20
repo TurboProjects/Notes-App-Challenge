@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import CategorySidebar from '@/components/CategorySidebar'
+import NewCategoryDialog from '@/components/NewCategoryDialog'
 
 // Helper function to format dates
 const formatDate = (date) => {
@@ -108,6 +109,11 @@ const NotesPage = () => {
     const [isLoadingCategories, setIsLoadingCategories] = useState(true)
     const [defaultCategoryId, setDefaultCategoryId] = useState(null)
     const [selectedCategory, setSelectedCategory] = useState(null) // null represents 'All Categories'
+    const [isNewCategoryOpen, setIsNewCategoryOpen] = useState(false)
+
+    const handleCategoryCreated = (newCategory) => {
+        setCategories(prev => [...prev, newCategory])
+    }
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -233,9 +239,14 @@ const NotesPage = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-[#faf1e4] font-sans">
-            <div className="flex justify-end p-4">
+            <div className="flex justify-end gap-2 p-4">
                 <NewNoteButton onClick={handleNewNote} />
             </div>
+            <NewCategoryDialog
+                open={isNewCategoryOpen}
+                onOpenChange={setIsNewCategoryOpen}
+                onCreated={handleCategoryCreated}
+            />
             <div className="flex flex-1">
                 <CategorySidebar 
                     categories={categories} 
