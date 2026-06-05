@@ -9,23 +9,39 @@ There are three main components in this project:
 - Frontend: Next.js
 - Database: PostgreSQL
 
+See [docs/ask-your-notes.md](docs/ask-your-notes.md) for how the event-driven RAG
+"Ask Your Notes" feature works: sequence diagram, ERD, and the architecture phases.
+[docs/outbox-inbox.md](docs/outbox-inbox.md) drills into the transactional-outbox
+and idempotent-consumer backbone (sequence + lifecycle diagrams).
+
+## Environment files
+
+Local env lives in `backend/.envs/.local/`. Create your local copies from them:
+
+```bash
+make setup
+```
+
+Then edit `backend/.envs/.local/.django` and set `EMBEDDING_API_KEY` and
+`GENERATION_API_KEY` (required to enable the "Ask Your Notes" pipeline).
+
 ## How to build
 
 ```bash
-docker compose build
+make build        # or: docker compose build
 ```
 
 ## How to run
 
 ```bash
-docker compose up
+make up           # or: docker compose up
 ```
 
 ## Inital setup
 
 Run the create initial db objects command to create the initial database objects: superuser and base categories.
 ```bash
-docker compose run --rm backend python manage.py create_init_objects
+make back init    # or: docker compose run --rm backend python manage.py create_init_objects
 ```
 
 ## Makefile
