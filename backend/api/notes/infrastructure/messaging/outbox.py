@@ -9,7 +9,8 @@ from api.notes.models import OutboxEvent
 
 
 class DjangoEventOutbox(EventOutbox):
-    """Transactional outbox writer.
+    """
+    Transactional outbox writer.
 
     The OutboxEvent INSERT joins the caller's transaction (ATOMIC_REQUESTS on
     the request path; explicit transaction in commands). The NOTIFY is issued

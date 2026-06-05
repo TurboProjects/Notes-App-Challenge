@@ -1,4 +1,5 @@
-"""Composition root: plain factory functions, one wiring per process. Tests
+"""
+Composition root: plain factory functions, one wiring per process. Tests
 build use cases with in-memory fakes of the ports.
 """
 

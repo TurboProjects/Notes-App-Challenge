@@ -1,13 +1,3 @@
-"""Outbox relay: the only bridge between Postgres truth and the broker.
-At-least-once by construction:
-
-  claim batch (FOR UPDATE SKIP LOCKED) -> publish (publisher confirms)
-  -> stamp published_at. Crash anywhere -> rows stay pending -> retried.
-
-Idle-cheap: sleeps on LISTEN outbox_channel; a slow poll (~10s) is the
-durable fallback because NOTIFY is fire-and-forget.
-"""
-
 import asyncio
 import json
 import logging
@@ -30,7 +20,8 @@ FALLBACK_POLL_SECONDS = 10.0
 
 
 def _claim_batch() -> list[OutboxEvent]:
-    """Claim pending events with FOR UPDATE SKIP LOCKED.
+    """
+    Claim pending events with FOR UPDATE SKIP LOCKED.
 
     The row lock is released when this transaction commits (before publish),
     so a concurrent relay could re-claim a batch mid-publish: the worst case
@@ -39,7 +30,7 @@ def _claim_batch() -> list[OutboxEvent]:
     relays from grinding on the same rows at the same instant.
     """
     with transaction.atomic():
-        events = list(
+        events: list[OutboxEvent] = list(
             OutboxEvent.objects.select_for_update(skip_locked=True)
             .filter(published_at__isnull=True)
             .order_by("id")[:BATCH_SIZE],
