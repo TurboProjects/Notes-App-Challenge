@@ -173,6 +173,7 @@ paths:
           - tr
           - tt
           - udm
+          - ug
           - uk
           - ur
           - uz
@@ -207,7 +208,6 @@ paths:
   /api/v1/categories/:
     get:
       operationId: v1_categories_list
-      description: ViewSet for viewing and editing categories.
       tags:
       - v1
       security:
@@ -224,7 +224,6 @@ paths:
           description: ''
     post:
       operationId: v1_categories_create
-      description: ViewSet for viewing and editing categories.
       tags:
       - v1
       requestBody:
@@ -252,12 +251,12 @@ paths:
   /api/v1/categories/{id}/:
     get:
       operationId: v1_categories_retrieve
-      description: ViewSet for viewing and editing categories.
       parameters:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this category.
         required: true
       tags:
       - v1
@@ -273,12 +272,12 @@ paths:
           description: ''
     put:
       operationId: v1_categories_update
-      description: ViewSet for viewing and editing categories.
       parameters:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this category.
         required: true
       tags:
       - v1
@@ -306,12 +305,12 @@ paths:
           description: ''
     patch:
       operationId: v1_categories_partial_update
-      description: ViewSet for viewing and editing categories.
       parameters:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this category.
         required: true
       tags:
       - v1
@@ -338,12 +337,12 @@ paths:
           description: ''
     delete:
       operationId: v1_categories_destroy
-      description: ViewSet for viewing and editing categories.
       parameters:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this category.
         required: true
       tags:
       - v1
@@ -356,12 +355,7 @@ paths:
   /api/v1/notes/:
     get:
       operationId: v1_notes_list
-      description: |-
-        ViewSet for viewing and editing notes.
-
-        list:
-        Return a paginated list of notes that belong to the authenticated user.
-        Optionally filter by category_id using query parameter.
+      description: Notes owned by the authenticated user; filter with ?category_id=.
       parameters:
       - name: page
         required: false
@@ -383,12 +377,7 @@ paths:
           description: ''
     post:
       operationId: v1_notes_create
-      description: |-
-        ViewSet for viewing and editing notes.
-
-        list:
-        Return a paginated list of notes that belong to the authenticated user.
-        Optionally filter by category_id using query parameter.
+      description: Notes owned by the authenticated user; filter with ?category_id=.
       tags:
       - v1
       requestBody:
@@ -416,12 +405,7 @@ paths:
   /api/v1/notes/{id}/:
     get:
       operationId: v1_notes_retrieve
-      description: |-
-        ViewSet for viewing and editing notes.
-
-        list:
-        Return a paginated list of notes that belong to the authenticated user.
-        Optionally filter by category_id using query parameter.
+      description: Notes owned by the authenticated user; filter with ?category_id=.
       parameters:
       - in: path
         name: id
@@ -442,12 +426,7 @@ paths:
           description: ''
     put:
       operationId: v1_notes_update
-      description: |-
-        ViewSet for viewing and editing notes.
-
-        list:
-        Return a paginated list of notes that belong to the authenticated user.
-        Optionally filter by category_id using query parameter.
+      description: Notes owned by the authenticated user; filter with ?category_id=.
       parameters:
       - in: path
         name: id
@@ -480,12 +459,7 @@ paths:
           description: ''
     patch:
       operationId: v1_notes_partial_update
-      description: |-
-        ViewSet for viewing and editing notes.
-
-        list:
-        Return a paginated list of notes that belong to the authenticated user.
-        Optionally filter by category_id using query parameter.
+      description: Notes owned by the authenticated user; filter with ?category_id=.
       parameters:
       - in: path
         name: id
@@ -517,12 +491,7 @@ paths:
           description: ''
     delete:
       operationId: v1_notes_destroy
-      description: |-
-        ViewSet for viewing and editing notes.
-
-        list:
-        Return a paginated list of notes that belong to the authenticated user.
-        Optionally filter by category_id using query parameter.
+      description: Notes owned by the authenticated user; filter with ?category_id=.
       parameters:
       - in: path
         name: id
@@ -536,6 +505,63 @@ paths:
       - tokenAuth: []
       responses:
         '204':
+          description: No response body
+  /api/v1/questions/:
+    post:
+      operationId: v1_questions_create
+      description: POST /api/v1/questions/ -> 202 Accepted + Location (async-request
+        pattern).
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/questions/{question_id}/:
+    get:
+      operationId: v1_questions_retrieve
+      description: |-
+        GET /api/v1/questions/{id}/: polling fallback. Status is DERIVED by
+        the repository (Answer exists -> SUCCESS; inbox FAILED -> FAILED; else
+        PENDING).
+      parameters:
+      - in: path
+        name: question_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/questions/{question_id}/stream-ticket/:
+    post:
+      operationId: v1_questions_stream_ticket_create
+      description: |-
+        POST /api/v1/questions/{id}/stream-ticket/ -> short-lived signed ticket.
+
+        EventSource cannot send Authorization headers, so the SSE endpoint
+        authenticates with this stateless ticket instead: scoped to ONE question's
+        stream, dead in STREAM_TICKET_MAX_AGE seconds.
+      parameters:
+      - in: path
+        name: question_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
           description: No response body
   /api/v1/users/:
     post:
@@ -705,8 +731,6 @@ components:
         color:
           type: string
           maxLength: 7
-        is_default:
-          type: boolean
         note_count:
           type: string
           readOnly: true
@@ -816,8 +840,6 @@ components:
         color:
           type: string
           maxLength: 7
-        is_default:
-          type: boolean
         note_count:
           type: string
           readOnly: true
