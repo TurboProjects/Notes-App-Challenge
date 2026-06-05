@@ -1,6 +1,3 @@
-"""Transport serializers (edge DTOs). They serialize domain entities: they
-never touch ORM models directly and never leak past the controllers."""
-
 from rest_framework import serializers
 
 from api.notes.domain.entities import Question

@@ -1,9 +1,3 @@
-"""Thin DRF controllers: transport validation -> command -> use case -> response.
-
-The error-handling decorator maps domain exceptions to HTTP status codes so
-the domain stays HTTP-agnostic.
-"""
-
 import functools
 
 from django.core import signing
@@ -24,8 +18,10 @@ from api.notes.infrastructure.container import build_question_repository
 
 
 def with_domain_errors(view_method):
-    """Domain exception -> HTTP status. 404 for not-found/not-owner: question
-    existence is never leaked to non-owners."""
+    """
+    Domain exception to HTTP status. 404 for not-found/not-owner: question
+    existence is never leaked to non-owners.
+    """
 
     @functools.wraps(view_method)
     def wrapper(*args, **kwargs):
@@ -64,9 +60,11 @@ class QuestionCreateController(APIView):
 
 
 class QuestionDetailController(APIView):
-    """GET /api/v1/questions/{id}/: polling fallback. Status is DERIVED by
+    """
+    GET /api/v1/questions/{id}/: polling fallback. Status is DERIVED by
     the repository (Answer exists -> SUCCESS; inbox FAILED -> FAILED; else
-    PENDING)."""
+    PENDING)
+    """
 
     permission_classes = [IsAuthenticated]
 
@@ -80,7 +78,8 @@ class QuestionDetailController(APIView):
 
 
 class StreamTicketController(APIView):
-    """POST /api/v1/questions/{id}/stream-ticket/ -> short-lived signed ticket.
+    """
+    POST /api/v1/questions/{id}/stream-ticket/ -> short-lived signed ticket.
 
     EventSource cannot send Authorization headers, so the SSE endpoint
     authenticates with this stateless ticket instead: scoped to ONE question's
