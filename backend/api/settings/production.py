@@ -2,10 +2,8 @@
 import logging
 
 import sentry_sdk
-from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
 
 from .base import *  # noqa: F403
 from .base import DATABASES
@@ -117,7 +115,6 @@ STORAGES = {
     },
 }
 MEDIA_URL = f"https://{aws_s3_domain}/media/"
-COLLECTFAST_STRATEGY = "collectfast.strategies.boto3.Boto3Strategy"
 STATIC_URL = f"https://{aws_s3_domain}/static/"
 
 # EMAIL
@@ -153,11 +150,6 @@ ANYMAIL = {
     "MAILGUN_SENDER_DOMAIN": env("MAILGUN_DOMAIN"),
     "MAILGUN_API_URL": env("MAILGUN_API_URL", default="https://api.mailgun.net/v3"),
 }
-
-# Collectfast
-# ------------------------------------------------------------------------------
-# https://github.com/antonagestam/collectfast#installation
-INSTALLED_APPS = ["collectfast", *INSTALLED_APPS]
 
 # LOGGING
 # ------------------------------------------------------------------------------
@@ -209,8 +201,6 @@ sentry_logging = LoggingIntegration(
 integrations = [
     sentry_logging,
     DjangoIntegration(),
-    CeleryIntegration(),
-    RedisIntegration(),
 ]
 sentry_sdk.init(
     dsn=SENTRY_DSN,

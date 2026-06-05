@@ -13,6 +13,9 @@ services:
       - postgres
     volumes:
       - ./backend:/app
+      # Don't mount the host .venv over the image's one (same pattern as
+      # the frontend's node_modules)
+      - /app/.venv
     env_file:
       - ./backend/.envs/.local/.django
       - ./backend/.envs/.local/.postgres

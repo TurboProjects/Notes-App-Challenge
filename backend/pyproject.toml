@@ -1,11 +1,77 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "Notes App backend (Django + DRF)"
+requires-python = ">=3.12"
+# Former requirements/base.txt, plus psycopg: the DB driver is required in
+# every environment (it used to live in production.txt and be re-pinned in
+# local.txt). The [binary] extra ships a bundled libpq, so local `uv sync`
+# and the Docker image need no build toolchain.
+dependencies = [
+    "python-slugify==8.0.4",       # https://github.com/un33k/python-slugify
+    "Pillow==12.2.0",              # https://github.com/python-pillow/Pillow
+    "argon2-cffi==25.1.0",         # https://github.com/hynek/argon2_cffi
+    "django==5.2.15",              # pyup: < 6.0  # https://www.djangoproject.com/
+    "django-environ==0.13.0",      # https://github.com/joke2k/django-environ
+    "django-model-utils==5.0.0",   # https://github.com/jazzband/django-model-utils
+    "djangorestframework==3.17.1", # https://github.com/encode/django-rest-framework
+    "django-cors-headers==4.9.0",  # https://github.com/adamchainz/django-cors-headers
+    "drf-spectacular==0.29.0",     # https://github.com/tfranzel/drf-spectacular
+    "pgvector==0.4.2",
+    "psycopg[binary]==3.3.4",      # https://github.com/psycopg/psycopg
+]
+
+[dependency-groups]
+# Former requirements/production.txt (minus psycopg, moved to base deps).
+production = [
+    "gunicorn==26.0.0",              # https://github.com/benoitc/gunicorn
+    "sentry-sdk==2.61.1",            # https://github.com/getsentry/sentry-python
+    "django-storages[s3]==1.14.6",   # https://github.com/jschneier/django-storages
+    "django-anymail[mailgun]==15.0", # https://github.com/anymail/django-anymail
+]
+# Former requirements/local.txt (minus its `-r production.txt` include and
+# the duplicated psycopg pin).
+dev = [
+    "Werkzeug[watchdog]==3.1.8", # https://github.com/pallets/werkzeug
+    "ipdb==0.13.13",             # https://github.com/gotcha/ipdb
+    "watchfiles==1.2.0",         # https://github.com/samuelcolvin/watchfiles
+    # Testing — mypy is pulled in via the [compatible-mypy] extras.
+    # django-stubs stays on the 5.2.x series (6.x targets Django 6).
+    "django-stubs[compatible-mypy]==5.2.9", # https://github.com/typeddjango/django-stubs
+    "pytest==9.0.3",                        # https://github.com/pytest-dev/pytest
+    "pytest-sugar==1.1.1",                  # https://github.com/Frozenball/pytest-sugar
+    # 3.17.x requires django-stubs>=6 (Django 6 series) — stay on 3.16.x
+    "djangorestframework-stubs[compatible-mypy]==3.16.9", # https://github.com/typeddjango/djangorestframework-stubs
+    # Code quality
+    "ruff==0.15.16",     # https://github.com/astral-sh/ruff
+    "coverage==7.14.1",  # https://github.com/nedbat/coveragepy
+    "djlint==1.38.1",    # https://github.com/Riverside-Healthcare/djLint
+    "pre-commit==4.6.0", # https://github.com/pre-commit/pre-commit
+    # Django
+    # 3.3.1+ ships py.typed: without a mypy plugin every MyFactory() call
+    # then type-checks as the factory class (not the model) → ~58 false
+    # positives in tests. Stay on 3.3.0.
+    "factory-boy==3.3.0",            # https://github.com/FactoryBoy/factory_boy
+    "django-debug-toolbar==6.3.0",   # https://github.com/jazzband/django-debug-toolbar
+    "django-extensions==4.1",        # https://github.com/django-extensions/django-extensions
+    "django-coverage-plugin==3.2.2", # https://github.com/nedbat/django_coverage_plugin
+    "pytest-django==4.12.0",         # https://github.com/pytest-dev/pytest-django
+]
+
+# ==== uv ====
+# No [build-system] on purpose: this is a "virtual" project — uv only installs
+# dependencies and never tries to build/install the `api` package itself.
+# default-groups mirrors the old requirements layout (local.txt included
+# production.txt): `uv sync` installs everything; `uv sync --no-dev` leaves
+# the production environment.
+[tool.uv]
+default-groups = ["dev", "production"]
+
 # ==== pytest ====
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--ds=api.settings.test --reuse-db --import-mode=importlib" 
-python_files = [
-    "tests.py",
-    "test_*.py",
-]
+addopts = "--ds=api.settings.test --reuse-db --import-mode=importlib"
+python_files = ["tests.py", "test_*.py"]
 
 # ==== Coverage ====
 [tool.coverage.run]
@@ -18,13 +84,13 @@ plugins = ["django_coverage_plugin"]
 python_version = "3.12"
 check_untyped_defs = true
 ignore_missing_imports = true
+# A stray __init__.py at the project root makes mypy map modules as both
+# "app.api.*" and "api.*"; pin module resolution to the project root.
+explicit_package_bases = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-plugins = [
-    "mypy_django_plugin.main",
-    "mypy_drf_plugin.main",
-]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 [[tool.mypy.overrides]]
 # Django migrations should not produce any errors:
@@ -78,7 +144,7 @@ exclude = [
     "node_modules",
     "venv",
     "*/migrations/*.py",
-    "staticfiles/*"
+    "staticfiles/*",
 ]
 # Same as Django: https://github.com/cookiecutter/cookiecutter-django/issues/4792.
 line-length = 88
@@ -87,78 +153,69 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = [
-  "F",
-  "E",
-  "W",
-  "C90",
-  "I",
-  "N",
-  "UP",
-  "YTT",
-  # "ANN", # flake8-annotations: we should support this in the future but 100+ errors atm
-  "ASYNC",
-  "S",
-  "BLE",
-  "FBT",
-  "B",
-  "A",
-  "COM",
-  "C4",
-  "DTZ",
-  "T10",
-  "DJ",
-  "EM",
-  "EXE",
-  "FA",
-  'ISC',
-  "ICN",
-  "G",
-  'INP',
-  'PIE',
-  "T20",
-  'PYI',
-  'PT',
-  "Q",
-  "RSE",
-  "RET",
-  "SLF",
-  "SLOT",
-  "SIM",
-  "TID",
-  "TCH",
-  "INT",
-  # "ARG", # Unused function argument
-  "PTH",
-  "ERA",
-  "PD",
-  "PGH",
-  "PL",
-  "TRY",
-  "FLY",
-  # "NPY",
-  # "AIR",
-  "PERF",
-  # "FURB",
-  # "LOG",
-  "RUF"
+    "F",
+    "E",
+    "W",
+    "C90",
+    "I",
+    "N",
+    "UP",
+    "YTT",
+    # "ANN", # flake8-annotations: we should support this in the future but 100+ errors atm
+    "ASYNC",
+    "S",
+    "BLE",
+    "FBT",
+    "B",
+    "A",
+    "COM",
+    "C4",
+    "DTZ",
+    "T10",
+    "DJ",
+    "EM",
+    "EXE",
+    "FA",
+    'ISC',
+    "ICN",
+    "G",
+    'INP',
+    'PIE',
+    "T20",
+    'PYI',
+    'PT',
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SLOT",
+    "SIM",
+    "TID",
+    "TC",
+    "INT",
+    # "ARG", # Unused function argument
+    "PTH",
+    "ERA",
+    "PD",
+    "PGH",
+    "PL",
+    "TRY",
+    "FLY",
+    # "NPY",
+    # "AIR",
+    "PERF",
+    # "FURB",
+    # "LOG",
+    "RUF",
 ]
 ignore = [
-  "S101", # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
-  "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
-  "SIM102", # sometimes it's better to nest
-  "UP038" # Checks for uses of isinstance/issubclass that take a tuple 
-          # of types for comparison.
-          # Deactivated because it can make the code slow: 
-          # https://github.com/astral-sh/ruff/issues/7871
+    "S101",   # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
+    "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    "SIM102", # sometimes it's better to nest
 ]
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
-# The fixes in extend-unsafe-fixes will require 
-# provide the `--unsafe-fixes` flag when fixing.
-extend-unsafe-fixes = [
-    "UP038"
-]
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
