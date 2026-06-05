@@ -142,6 +142,15 @@ const AskYourNotes = () => {
     }
 
     const citations = result?.answer?.citations ?? []
+    // One reference per source note: the LLM may cite several chunks of the same
+    // note, so keep the first (most relevant by cited_order) per note_id.
+    const seen = new Set()
+    const uniqueCitations = citations.filter((citation) => {
+        const key = citation.note_id ?? `chunk-${citation.chunk_id}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+    })
 
     return (
         <>
@@ -224,12 +233,12 @@ const AskYourNotes = () => {
                                         <p className="whitespace-pre-wrap text-[#4a3728]">
                                             {result?.answer?.text}
                                         </p>
-                                        {citations.length > 0 ? (
+                                        {uniqueCitations.length > 0 ? (
                                             <div className="mt-6">
                                                 <p className="font-bold text-[#4a3728]">References:</p>
                                                 <ul className="mt-2 space-y-1">
-                                                    {citations.map((citation) => (
-                                                        <li key={`${citation.cited_order}-${citation.chunk_id}`}>
+                                                    {uniqueCitations.map((citation) => (
+                                                        <li key={citation.note_id ?? citation.chunk_id}>
                                                             <button
                                                                 onClick={() => citation.note_id
                                                                     && router.push(`/notes/editor/${citation.note_id}`)}
