@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import CategorySidebar from '@/components/CategorySidebar'
+import AskYourNotes from '@/components/AskYourNotes'
 
 // Helper function to format dates
 const formatDate = (date) => {
@@ -233,7 +234,7 @@ const NotesPage = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-[#faf1e4] font-sans">
-            <div className="flex justify-end p-4">
+            <div className="flex justify-end gap-2 p-4">
                 <NewNoteButton onClick={handleNewNote} />
             </div>
             <div className="flex flex-1">
@@ -250,6 +251,7 @@ const NotesPage = () => {
                     lastNoteRef={lastNoteRef}
                 />
             </div>
+            <AskYourNotes />
         </div>
     )
 }

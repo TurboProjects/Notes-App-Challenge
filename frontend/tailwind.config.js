@@ -51,6 +51,10 @@ theme: {
 			border: 'hsl(var(--border))',
 			input: 'hsl(var(--input))',
 			ring: 'hsl(var(--ring))',
+			cactus: {
+				DEFAULT: 'hsl(var(--cactus) / <alpha-value>)',
+				ring: 'hsl(var(--cactus-ring) / <alpha-value>)'
+			},
 			chart: {
 				'1': 'hsl(var(--chart-1))',
 				'2': 'hsl(var(--chart-2))',
