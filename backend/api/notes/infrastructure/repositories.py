@@ -1,6 +1,6 @@
 """Driven adapters: Django ORM implementations of the domain ports.
 
-Async methods wrap sync transactional code with sync_to_async — Django
+Async methods wrap sync transactional code with sync_to_async: Django
 transactions are thread-bound, and the workers call these from the aio-pika
 event loop.
 """
@@ -16,6 +16,7 @@ from django.contrib.postgres.search import SearchVector
 from django.db import IntegrityError
 from django.db import connection
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from api.notes.domain import entities
@@ -166,14 +167,14 @@ class DjangoQuestionRepository(QuestionRepository):
                         text=generated.text,
                     )
             except IntegrityError:
-                # OneToOne hit: a concurrent duplicate already answered —
+                # OneToOne hit: a concurrent duplicate already answered:
                 # structurally idempotent, nothing else to do.
                 logger.info("question=%s already answered; skipping", question_id)
                 return
 
             # A concurrent re-index may have deleted a cited chunk between
-            # retrieval and now — degrade to chunk=None (the snippet and the
-            # denormalized note keep the citation auditable; design D4.6).
+            # retrieval and now: degrade to chunk=None (the snippet and the
+            # denormalized note keep the citation auditable).
             cited_ids = [c for c in generated.cited_chunk_ids if c in by_id]
             still_existing = set(
                 NoteChunk.objects.filter(id__in=cited_ids).values_list(
@@ -215,7 +216,7 @@ class DjangoQuestionRepository(QuestionRepository):
 
 
 class PgChunkSearchRepository(ChunkSearchRepository):
-    """The retrieval pipeline as ONE SQL statement with CTEs (design D3):
+    """The retrieval pipeline as ONE SQL statement with CTEs:
 
     vector top-30 + FTS top-30 -> RRF (k=60) -> top-10 -> neighbor expansion
     (chunk_index +/- 1, same note) -> dedup -> reorder (note_id, chunk_index).
@@ -323,6 +324,18 @@ class PgChunkSearchRepository(ChunkSearchRepository):
 
 class DjangoNoteIndexRepository(NoteIndexRepository):
     @override
+    def get_content_and_hash(self, *, note_id: int) -> tuple[str, str]:
+        try:
+            row = Note.objects.values("content", "content_hash").get(id=note_id)
+        except Note.DoesNotExist as exc:
+            raise NoteNotFoundError(str(note_id)) from exc
+        return row["content"], row["content_hash"]
+
+    @override
+    def set_content_hash(self, *, note_id: int, content_hash: str) -> None:
+        Note.objects.filter(id=note_id).update(content_hash=content_hash)
+
+    @override
     async def aget_note_content(self, *, note_id: int) -> tuple[str, str]:
         try:
             row = await Note.objects.values("content", "content_hash").aget(id=note_id)
@@ -332,9 +345,9 @@ class DjangoNoteIndexRepository(NoteIndexRepository):
 
     @override
     async def aget_existing_chunk_hashes(self, *, note_id: int) -> dict[str, int]:
-        # Only chunks at the CURRENT embedding version count as reusable —
+        # Only chunks at the CURRENT embedding version count as reusable:
         # a version bump therefore re-embeds everything (zero-downtime
-        # migration path, ADR-0002).
+        # migration path).
         return {
             row["content_hash"]: row["id"]
             async for row in NoteChunk.objects.filter(
@@ -372,7 +385,7 @@ class DjangoNoteIndexRepository(NoteIndexRepository):
         """Atomic index swap: readers never see a half-indexed note.
 
         Unchanged chunks keep their embedding VALUES (copied across the
-        delete+insert) — the zero-API-cost part of incremental re-indexing.
+        delete+insert), the zero-API-cost part of incremental re-indexing.
         """
         with transaction.atomic():
             existing_vectors = dict(
@@ -413,11 +426,9 @@ class DjangoNoteIndexRepository(NoteIndexRepository):
             NoteChunk.objects.filter(note_id=note_id).update(
                 content_tsv=SearchVector("text", config="english"),
             )
-            Note.objects.filter(id=note_id).update(
-                indexed_at=timezone.now(),
-                embedding_model=embedding_model,
-                embedding_version=embedding_version,
-            )
+            # Embedding model/version live on the chunks (and in settings):
+            # the Note only records that it has been indexed.
+            Note.objects.filter(id=note_id).update(indexed_at=timezone.now())
 
     @override
     def iter_notes_needing_index(
@@ -426,16 +437,21 @@ class DjangoNoteIndexRepository(NoteIndexRepository):
         embedding_version: int,
         batch_size: int,
     ) -> Iterator[list[tuple[int, str]]]:
+        # A note needs (re)indexing when it was never indexed, or when any of
+        # its chunks carry an older embedding version (the version lives on the
+        # chunks now, not the Note). Keyset pagination by id; distinct collapses
+        # the chunk join.
         last_id = 0
         while True:
             batch = list(
                 Note.objects.filter(id__gt=last_id)
-                .exclude(
-                    indexed_at__isnull=False,
-                    embedding_version__gte=embedding_version,
+                .filter(
+                    Q(indexed_at__isnull=True)
+                    | Q(chunks__embedding_version__lt=embedding_version),
                 )
                 .order_by("id")
-                .values_list("id", "content_hash")[:batch_size],
+                .values_list("id", "content_hash")
+                .distinct()[:batch_size],
             )
             if not batch:
                 return

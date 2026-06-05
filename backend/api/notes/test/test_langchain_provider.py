@@ -1,8 +1,8 @@
-"""Unit tests for the LangChain provider's pure streaming helper — no network.
+"""Unit tests for the LangChain provider's pure streaming helper: no network.
 
 extract_answer_delta diffs the "answer" field out of a growing partial-JSON
-buffer (ADR-0007). Its contract: never raise mid-stream; "unparseable yet"
-means "no new delta".
+buffer. Its contract: never raise mid-stream; "unparseable yet" means "no new
+delta".
 """
 
 from django.test import SimpleTestCase

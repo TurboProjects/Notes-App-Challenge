@@ -50,8 +50,8 @@ class AnswerQuestionUseCase:
         )
 
         if not chunks:
-            # Empty-retrieval short-circuit (design D3): a valid outcome, not a
-            # failure — skip the generation call entirely.
+            # Empty-retrieval short-circuit: a valid outcome, not a failure:
+            # skip the generation call entirely.
             logger.info("question=%s no chunks retrieved; skipping LLM", question.id)
             generated = GeneratedAnswer(
                 text=NO_SOURCES_MESSAGE,

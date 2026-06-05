@@ -26,7 +26,7 @@ async def _handle(payload: dict[str, Any], event_id: str) -> None:
             ),
         )
     except NoteNotFoundError:
-        # The note was deleted after the event was queued — nothing to index.
+        # The note was deleted after the event was queued: nothing to index.
         logger.info("note=%s deleted before indexing; skipping", envelope.note_id)
 
 

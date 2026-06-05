@@ -1,7 +1,7 @@
 """Thin DRF controllers: transport validation -> command -> use case -> response.
 
 The error-handling decorator maps domain exceptions to HTTP status codes so
-the domain stays HTTP-agnostic (ADR-0004).
+the domain stays HTTP-agnostic.
 """
 
 import functools
@@ -64,7 +64,7 @@ class QuestionCreateController(APIView):
 
 
 class QuestionDetailController(APIView):
-    """GET /api/v1/questions/{id}/ — polling fallback. Status is DERIVED by
+    """GET /api/v1/questions/{id}/: polling fallback. Status is DERIVED by
     the repository (Answer exists -> SUCCESS; inbox FAILED -> FAILED; else
     PENDING)."""
 
@@ -83,8 +83,8 @@ class StreamTicketController(APIView):
     """POST /api/v1/questions/{id}/stream-ticket/ -> short-lived signed ticket.
 
     EventSource cannot send Authorization headers, so the SSE endpoint
-    authenticates with this stateless ticket instead (design D2): scoped to
-    ONE question's stream, dead in STREAM_TICKET_MAX_AGE seconds.
+    authenticates with this stateless ticket instead: scoped to ONE question's
+    stream, dead in STREAM_TICKET_MAX_AGE seconds.
     """
 
     permission_classes = [IsAuthenticated]

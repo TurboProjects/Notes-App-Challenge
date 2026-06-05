@@ -1,4 +1,4 @@
-"""aio-pika consumer runtime (design D1 / ADR-0001).
+"""aio-pika consumer runtime.
 
 Per message:
   1. parse the thin envelope          -> malformed = poison -> DLQ, no retries

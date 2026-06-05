@@ -25,8 +25,8 @@ services:
       - '${BACKEND_PORT:-8000}:8000'
     command: /start
 
-  # Event-driven processes (ADR-0001): reuse the backend image with a
-  # different command — one build, five processes.
+  # Event-driven processes: reuse the backend image with a different command:
+  # one build, five processes.
   outbox-relay:
     image: 679403a7__notes-app_backend_django
     container_name: 679403a7__notes-app_outbox_relay
@@ -43,7 +43,10 @@ services:
     env_file:
       - ./backend/.envs/.local/.django
       - ./backend/.envs/.local/.postgres
-    command: python manage.py run_outbox_relay
+    # watchfiles gives these management commands the same dev autoreload as
+    # uvicorn --reload (they have none on their own). NOTE: reloads CODE only:
+    # changing .envs/*.django still needs `up -d --force-recreate`.
+    command: ["watchfiles", "--filter", "python", "python manage.py run_outbox_relay", "api"]
 
   rag-worker:
     image: 679403a7__notes-app_backend_django
@@ -61,7 +64,7 @@ services:
     env_file:
       - ./backend/.envs/.local/.django
       - ./backend/.envs/.local/.postgres
-    command: python manage.py run_rag_worker
+    command: ["watchfiles", "--filter", "python", "python manage.py run_rag_worker", "api"]
 
   embedding-worker:
     image: 679403a7__notes-app_backend_django
@@ -79,7 +82,7 @@ services:
     env_file:
       - ./backend/.envs/.local/.django
       - ./backend/.envs/.local/.postgres
-    command: python manage.py run_embedding_worker
+    command: ["watchfiles", "--filter", "python", "python manage.py run_embedding_worker", "api"]
 
   frontend:
     build:
@@ -115,7 +118,7 @@ services:
       retries: 10
 
   rabbitmq:
-    # Management UI on :15672 (guest/guest) — live queues, DLQs, message rates.
+    # Management UI on :15672 (guest/guest), live queues, DLQs, message rates.
     # Exchanges/queues are declared idempotently by the consumers at startup,
     # so boot order only matters through the healthcheck below.
     image: docker.io/rabbitmq:4-management

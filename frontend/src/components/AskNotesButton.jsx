@@ -6,10 +6,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils'
 
 /**
- * Circular cactus trigger for the "Ask your notes" modal (Figma 4213-153).
- * Icon-only by design; aria-label + tooltip preserve discoverability.
- * Positioning is the caller's concern (used as a bottom-left floating button
- * via `className`), keeping this component layout-agnostic.
+ * Circular cactus trigger for the "Ask your notes" modal. Icon-only by design;
+ * aria-label + tooltip preserve discoverability. Positioning is the caller's
+ * concern (a `className`), keeping this component layout-agnostic.
  */
 export function AskNotesButton({ onClick, className }) {
     return (

@@ -16,7 +16,7 @@ class ReindexNoteUseCase:
     are deleted in the same transaction (atomic index swap).
     """
 
-    def __init__(  # noqa: PLR0913 — DI constructor: ports + config knobs
+    def __init__(  # noqa: PLR0913 (DI constructor: ports + config knobs)
         self,
         *,
         notes_index: NoteIndexRepository,

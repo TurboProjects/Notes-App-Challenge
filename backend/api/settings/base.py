@@ -267,7 +267,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {"questions": "30/hour"},
 }
 
-# Messaging (RabbitMQ + transactional outbox/inbox — see ADR-0001)
+# Messaging (RabbitMQ + transactional outbox/inbox)
 # -------------------------------------------------------------------------------
 RABBITMQ_URL = env("RABBITMQ_URL", default="amqp://guest:guest@rabbitmq:5672//")
 EVENTS_EXCHANGE = "notes.events"
@@ -277,24 +277,25 @@ EVENTS_DELIVERY_LIMIT = 5
 OUTBOX_NOTIFY_CHANNEL = "outbox_channel"
 QUESTION_EVENTS_CHANNEL = "question_events"
 
-# AI / RAG (see ADR-0002, ADR-0007)
+# AI / RAG
 # -------------------------------------------------------------------------------
-# Per-role keys, no fallback (ADR-0007): embedding and generation are
-# configured independently — both must be set to enable the Ask pipeline.
+# Per-role keys, no fallback: embedding and generation are configured
+# independently: both must be set to enable the Ask pipeline.
 EMBEDDING_API_KEY = env("EMBEDDING_API_KEY", default="")
 GENERATION_API_KEY = env("GENERATION_API_KEY", default="")
+# Cheapest OpenAI embedding model ($0.02 / 1M tokens vs 3-large $0.13, ada-002 $0.10)
 EMBEDDING_MODEL = env("EMBEDDING_MODEL", default="text-embedding-3-small")
 EMBEDDING_DIMENSIONS = 1536
 EMBEDDING_VERSION = env.int("EMBEDDING_VERSION", default=1)
-# Cheapest viable chat model; gpt-4.1-nano is the documented fallback (ADR-0007)
+# Cheapest viable chat model; gpt-4.1-nano is the documented fallback.
 GENERATION_MODEL = env("GENERATION_MODEL", default="gpt-5-nano")
-# Retrieval pipeline knobs (design D3: 30/30 → RRF k=60 → top-10 → neighbors ±1)
+# Retrieval pipeline knobs (30/30 -> RRF k=60 -> top-10 -> neighbors +/-1)
 RETRIEVAL_VECTOR_TOP_K = 30
 RETRIEVAL_FTS_TOP_K = 30
 RETRIEVAL_RRF_K = 60
 RETRIEVAL_FUSED_TOP_K = 10
 RETRIEVAL_NEIGHBOR_WINDOW = 1
-# Chunking (~500–800 tokens, ~15% overlap)
+# Chunking (~500-800 tokens, ~15% overlap)
 CHUNK_TARGET_TOKENS = 650
 CHUNK_OVERLAP_RATIO = 0.15
 # SSE stream tickets (django.core.signing)

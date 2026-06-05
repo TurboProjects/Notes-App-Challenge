@@ -14,7 +14,7 @@ class DjangoEventOutbox(EventOutbox):
     The OutboxEvent INSERT joins the caller's transaction (ATOMIC_REQUESTS on
     the request path; explicit transaction in commands). The NOTIFY is issued
     in the same transaction: Postgres queues it and delivers it to listeners
-    only at COMMIT — so the relay never wakes for work that rolled back.
+    only at COMMIT, so the relay never wakes for work that rolled back.
     """
 
     @override

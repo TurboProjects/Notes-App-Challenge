@@ -72,8 +72,8 @@ async def _stream(question_id: int, user_id: int) -> AsyncIterator[str]:
                 )
 
             if payload is not None and payload.get("kind") == "delta":
-                # Ephemeral answer-text delta (ADR-0007): forwarded as-is, no
-                # DB hit; the durable answer still arrives via `status` below.
+                # Ephemeral answer-text delta: forwarded as-is, no DB hit; the
+                # durable answer still arrives via `status` below.
                 yield _sse_event(
                     "delta",
                     {"seq": payload.get("seq"), "text": payload.get("text", "")},
@@ -81,7 +81,7 @@ async def _stream(question_id: int, user_id: int) -> AsyncIterator[str]:
                 )
                 continue
 
-            # `status` notification, unknown/missing kind, or timeout — the
+            # `status` notification, unknown/missing kind, or timeout: the
             # snapshot query is the source of truth either way.
             question = await sync_to_async(_snapshot)(question_id, user_id)
             if question.status != QuestionStatus.PENDING:
@@ -95,7 +95,7 @@ async def _stream(question_id: int, user_id: int) -> AsyncIterator[str]:
 
 @transaction.non_atomic_requests
 async def question_stream(request: HttpRequest, question_id: int) -> HttpResponse:
-    """ATOMIC_REQUESTS must not wrap async views — and a long-lived stream
+    """ATOMIC_REQUESTS must not wrap async views, and a long-lived stream
     must never hold a transaction open anyway; its reads are punctual
     snapshot queries through sync_to_async."""
     ticket = request.GET.get("ticket", "")

@@ -7,7 +7,7 @@ QUESTION_ASKED_TOPIC = "question.asked"
 
 
 class AskQuestionUseCase:
-    """Persist the question and request async answering — atomically.
+    """Persist the question and request async answering, atomically.
 
     Both writes share the request transaction (ATOMIC_REQUESTS), which is the
     whole point of the transactional outbox: no dual-write window.

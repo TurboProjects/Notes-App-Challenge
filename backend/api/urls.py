@@ -24,7 +24,7 @@ router.register(r'notes', NoteViewSet, basename='note')
 # API URLS
 urlpatterns += [
     path('api/v1/', include(router.urls)),
-    # Ask Your Notes (questions/answers — see openspec change add-ask-your-notes)
+    # Ask Your Notes (questions / answers / SSE stream)
     path('api/v1/', include('api.notes.infrastructure.api.urls')),
     path('api/auth/register/', RegistrationView.as_view(), name='register'),
     path("api/auth-token/", obtain_auth_token),

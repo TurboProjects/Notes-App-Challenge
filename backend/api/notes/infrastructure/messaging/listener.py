@@ -1,11 +1,11 @@
-"""PgListener: the shared LISTEN primitive (design D2 / ADR-0001).
+"""PgListener: the shared LISTEN primitive.
 
 Used by two consumers with different roles:
 - the outbox relay (wake-up signal over `outbox_channel`)
 - the SSE broadcaster (result notifications over `question_events`)
 
 LISTEN is a *subscription*: it needs a continuously-held, autocommit
-connection (notifications arriving while disconnected are lost — that is why
+connection (notifications arriving while disconnected are lost: that is why
 both users pair it with a durable fallback: the relay's slow poll, the SSE
 snapshot query on connect).
 """
@@ -50,7 +50,7 @@ class PgListener:
 
     async def wait(self, *, wait_seconds: float) -> list[str]:
         """Block until a notification arrives or `wait_seconds` elapse;
-        returns the payloads received (empty on timeout — callers use that
+        returns the payloads received (empty on timeout: callers use that
         as their fallback tick)."""
         assert self._conn is not None, "PgListener used outside its context"
         return [

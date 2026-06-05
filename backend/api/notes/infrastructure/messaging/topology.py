@@ -1,5 +1,5 @@
-"""RabbitMQ topology (design D1): declared idempotently at startup by every
-process that touches the broker, so boot order never matters.
+"""RabbitMQ topology: declared idempotently at startup by every process that
+touches the broker, so boot order never matters.
 
   exchange notes.events (topic) ──┬── question.asked.q ──(x-delivery-limit=5)──┐
                                   └── note.embed.q     ──(x-delivery-limit=5)──┤

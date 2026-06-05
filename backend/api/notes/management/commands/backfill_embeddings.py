@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = (
         "Bigbang backfill: enqueue note.embed.requested events for notes that "
         "were never indexed (or carry an outdated embedding version). Never "
-        "embeds inline — the embedding worker does the work. Idempotent."
+        "embeds inline: the embedding worker does the work. Idempotent."
     )
 
     def add_arguments(self, parser):

@@ -1,9 +1,9 @@
-"""Per-process SSE broadcaster (design D2).
+"""Per-process SSE broadcaster.
 
 ONE dedicated LISTEN connection per API process; an asyncio task fans
 notifications out to in-process queues, one per live SSE response. 50
 concurrent SSE clients cost 50 cheap ASGI responses + ONE Postgres
-connection — never one LISTEN per client.
+connection, never one LISTEN per client.
 
 NOT the outbox relay: the relay moves durable work Postgres -> RabbitMQ from
 its own process; this moves ephemeral UX notifications Postgres -> HTTP

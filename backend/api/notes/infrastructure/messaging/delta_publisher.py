@@ -1,7 +1,7 @@
 """PgAnswerDeltaPublisher: streaming answer deltas over Postgres NOTIFY.
 
-Implements the AnswerDeltaPublisher port (ADR-0007). Deltas are ephemeral UX
-— best-effort by contract: a lost delta only degrades streaming; the durable
+Implements the AnswerDeltaPublisher port. Deltas are ephemeral UX,
+best-effort by contract: a lost delta only degrades streaming; the durable
 answer always arrives via the terminal `status` event.
 
 Two mechanics matter here:

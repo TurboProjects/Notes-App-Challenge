@@ -1,5 +1,5 @@
-"""Outbox relay (ADR-0001): the only bridge between Postgres truth and the
-broker. At-least-once by construction:
+"""Outbox relay: the only bridge between Postgres truth and the broker.
+At-least-once by construction:
 
   claim batch (FOR UPDATE SKIP LOCKED) -> publish (publisher confirms)
   -> stamp published_at. Crash anywhere -> rows stay pending -> retried.
@@ -33,7 +33,7 @@ def _claim_batch() -> list[OutboxEvent]:
     """Claim pending events with FOR UPDATE SKIP LOCKED.
 
     The row lock is released when this transaction commits (before publish),
-    so a concurrent relay could re-claim a batch mid-publish — the worst case
+    so a concurrent relay could re-claim a batch mid-publish: the worst case
     is a duplicate publish, which is exactly the at-least-once contract the
     consumers' InboxEvent dedup absorbs. SKIP LOCKED still prevents two
     relays from grinding on the same rows at the same instant.
@@ -67,7 +67,7 @@ async def run_relay() -> None:
             while True:
                 events = await sync_to_async(_claim_batch)()
                 if not events:
-                    # Sleep until NOTIFY or fallback tick — zero idle queries.
+                    # Sleep until NOTIFY or fallback tick: zero idle queries.
                     await listener.wait(wait_seconds=FALLBACK_POLL_SECONDS)
                     continue
 

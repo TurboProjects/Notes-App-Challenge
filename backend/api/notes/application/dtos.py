@@ -1,4 +1,4 @@
-"""Application commands (frozen dataclasses — no validation library at this
+"""Application commands (frozen dataclasses: no validation library at this
 layer by design; transport validation happens in DRF serializers, domain
 validation in pydantic entities)."""
 

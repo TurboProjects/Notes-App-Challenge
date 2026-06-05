@@ -77,7 +77,7 @@ const AskYourNotes = () => {
     }, [handleTerminal]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // SSE wrapper: EventSource can't send auth headers, so every (re)connect
-    // mints a fresh short-lived signed ticket first (see ADR-0003).
+    // mints a fresh short-lived signed ticket first.
     const connectStream = useCallback(async (questionId) => {
         try {
             const ticketResponse = await fetch(
@@ -91,8 +91,8 @@ const AskYourNotes = () => {
                 `${API}/api/v1/questions/${questionId}/stream?ticket=${encodeURIComponent(ticket)}`,
             )
             eventSourceRef.current = source
-            // Token streaming (ADR-0007): append delta suffixes; a seq that
-            // goes backwards means a worker retry restarted the stream.
+            // Token streaming: append delta suffixes; a seq that goes backwards
+            // means a worker retry restarted the stream.
             source.addEventListener('delta', (event) => {
                 const { seq, text: deltaText } = JSON.parse(event.data)
                 if (seq <= lastSeqRef.current) {
@@ -198,7 +198,7 @@ const AskYourNotes = () => {
                                         </p>
                                     ) : (
                                         <p className="mt-2 text-sm text-[#a08b76]">
-                                            Searching your notes and writing an answer…
+                                            Searching your notes and writing an answer...
                                         </p>
                                     )
                                 )}

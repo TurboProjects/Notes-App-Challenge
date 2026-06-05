@@ -14,7 +14,7 @@ NOTE_EMBED_TOPIC = "note.embed.requested"
 class BackfillEmbeddingsUseCase:
     """Bigbang backfill: ENQUEUES note.embed.requested events in batches.
 
-    Never embeds inline — the embedding worker (the same pipeline that serves
+    Never embeds inline: the embedding worker (the same pipeline that serves
     live edits) does the work. Resumable and idempotent for free: re-runs
     select only notes still missing the target embedding version.
     """

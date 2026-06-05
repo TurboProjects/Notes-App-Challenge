@@ -7,11 +7,8 @@ from api.notes.domain.enums import QuestionStatus
 
 
 class Citation(BaseModel):
-    """A source the LLM actually cited, frozen at answer time.
-
-    chunk_id survives as None after re-chunking (SET_NULL); note_id and
-    snippet keep the citation resolvable and auditable forever.
-    """
+    """A chunk the LLM cited, frozen at answer time. chunk_id goes None on
+    re-chunk (SET_NULL); note_id + snippet keep it resolvable and auditable."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -25,8 +22,8 @@ class Citation(BaseModel):
 
 
 class Answer(BaseModel):
-    """The generated answer. Its existence IS the success state — no status
-    field by design (see ADR-0001)."""
+    """The generated answer; its existence IS the success state: no status
+    field by design."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -38,10 +35,8 @@ class Answer(BaseModel):
 
 class Question(BaseModel):
     """Aggregate root. Immutable user input; status/error_code are derived
-    read-model attributes populated by the repository, never stored.
-
-    user_id is an opaque string in the domain (the users app keys users by
-    UUID); boundaries convert with str()."""
+    read-model fields populated by the repository, never stored. user_id is an
+    opaque string (users are keyed by UUID; boundaries convert with str())."""
 
     model_config = ConfigDict(from_attributes=True)
 

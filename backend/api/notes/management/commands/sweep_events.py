@@ -10,8 +10,8 @@ from api.notes.models import OutboxEvent
 class Command(BaseCommand):
     help = (
         "Retention sweep: delete published OutboxEvent rows and SUCCEEDED "
-        "InboxEvent rows older than --days. FAILED inbox rows are KEPT — "
-        "they back the API's derived FAILED status (ADR-0001)."
+        "InboxEvent rows older than --days. FAILED inbox rows are KEPT: "
+        "they back the API's derived FAILED status."
     )
 
     def add_arguments(self, parser):

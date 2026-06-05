@@ -1,9 +1,9 @@
-"""Unit tests for the SSE stream generator's delta path — fake broadcaster,
+"""Unit tests for the SSE stream generator's delta path: fake broadcaster,
 patched snapshot, no DB.
 
-ADR-0007: `kind: delta` payloads are forwarded as `event: delta` frames
-WITHOUT a re-snapshot; `kind: status` (or unknown kinds) re-snapshot and
-terminate when the question is terminal.
+`kind: delta` payloads are forwarded as `event: delta` frames WITHOUT a
+re-snapshot; `kind: status` (or unknown kinds) re-snapshot and terminate when
+the question is terminal.
 """
 
 import asyncio
@@ -51,13 +51,12 @@ class QuestionStreamDeltaTests(SimpleTestCase):
         broadcaster = FakeBroadcaster(payloads)
 
         async def run():
-            frames = []
             with (
                 mock.patch.object(sse, "broadcaster", broadcaster),
                 mock.patch.object(sse, "_snapshot", side_effect=snapshots) as snap,
             ):
-                async for frame in sse._stream(1, "u-1"):
-                    frames.append(frame)
+                stream = sse._stream(1, "u-1")  # noqa: SLF001 (the unit under test)
+                frames = [frame async for frame in stream]
             return frames, snap
 
         frames, snap = asyncio.run(run())

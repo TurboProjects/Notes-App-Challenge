@@ -1,6 +1,5 @@
-"""Composition root (ADR-0004): plain factory functions, one wiring per
-process. No IoC container library — this is Django's idiomatic equivalent of
-FastAPI's Depends. Tests build use cases with in-memory fakes of the ports.
+"""Composition root: plain factory functions, one wiring per process. Tests
+build use cases with in-memory fakes of the ports.
 """
 
 from django.conf import settings
@@ -9,6 +8,7 @@ from api.notes.application.use_cases import AnswerQuestionUseCase
 from api.notes.application.use_cases import AskQuestionUseCase
 from api.notes.application.use_cases import BackfillEmbeddingsUseCase
 from api.notes.application.use_cases import ReindexNoteUseCase
+from api.notes.application.use_cases import RequestNoteIndexingUseCase
 from api.notes.infrastructure.langchain_provider import LangChainAnswerGenerator
 from api.notes.infrastructure.langchain_provider import LangChainEmbeddingProvider
 from api.notes.infrastructure.messaging.delta_publisher import PgAnswerDeltaPublisher
@@ -28,6 +28,13 @@ def build_question_repository() -> DjangoQuestionRepository:
 def build_ask_question_use_case() -> AskQuestionUseCase:
     return AskQuestionUseCase(
         questions=DjangoQuestionRepository(),
+        outbox=DjangoEventOutbox(),
+    )
+
+
+def build_request_note_indexing_use_case() -> RequestNoteIndexingUseCase:
+    return RequestNoteIndexingUseCase(
+        notes_index=DjangoNoteIndexRepository(),
         outbox=DjangoEventOutbox(),
     )
 

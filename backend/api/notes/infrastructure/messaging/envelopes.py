@@ -1,4 +1,4 @@
-"""Thin versioned message envelopes (ADR-0005).
+"""Thin versioned message envelopes.
 
 Deliberately NOT pydantic: payloads carry only ids and hashes, so explicit
 structural checks are enough. Malformed payloads raise MalformedPayloadError

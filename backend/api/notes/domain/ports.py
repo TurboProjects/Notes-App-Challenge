@@ -1,8 +1,7 @@
 """Ports (ABCs) implemented by infrastructure adapters.
 
 Sync methods serve the HTTP request path (DRF is sync); async methods serve
-the aio-pika workers. Implementations live in infrastructure/ and are wired
-by the composition root (infrastructure/container.py).
+the aio-pika workers.
 """
 
 from abc import ABC
@@ -68,6 +67,15 @@ class NoteIndexRepository(ABC):
     """Persistence for the chunk index (the embedding worker's port)."""
 
     @abstractmethod
+    def get_content_and_hash(self, *, note_id: int) -> tuple[str, str]:
+        """Sync (request path): returns (content, stored content_hash);
+        raises NoteNotFoundError."""
+
+    @abstractmethod
+    def set_content_hash(self, *, note_id: int, content_hash: str) -> None:
+        """Sync (request path): persist the recomputed content_hash."""
+
+    @abstractmethod
     async def aget_note_content(self, *, note_id: int) -> tuple[str, str]:
         """Returns (content, current content_hash); raises NoteNotFoundError."""
 
@@ -120,12 +128,12 @@ class AnswerGenerator(ABC):
 
 
 class AnswerDeltaPublisher(ABC):
-    """Ephemeral streaming deltas for live SSE consumers (ADR-0007)."""
+    """Ephemeral streaming deltas for live SSE consumers."""
 
     @abstractmethod
     async def apublish(self, *, question_id: int, seq: int, text: str) -> None:
         """Best-effort publish of an answer-text delta; must never raise into
-        the answer pipeline — a lost delta only degrades the streaming UX."""
+        the answer pipeline: a lost delta only degrades the streaming UX."""
 
 
 class EventOutbox(ABC):
