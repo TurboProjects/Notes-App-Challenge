@@ -19,6 +19,11 @@ dependencies = [
     "drf-spectacular==0.29.0",     # https://github.com/tfranzel/drf-spectacular
     "pgvector==0.4.2",
     "psycopg[binary]==3.3.4",      # https://github.com/psycopg/psycopg
+    "uvicorn[standard]==0.49.0",
+    "aio-pika==9.6.2",
+    "openai==2.41.0",
+    "pydantic==2.13.4",
+    "langchain-openai==1.2.2", # https://github.com/langchain-ai/langchain
 ]
 
 [dependency-groups]

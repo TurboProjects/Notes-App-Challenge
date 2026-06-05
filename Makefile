@@ -65,7 +65,7 @@ back-help: ## List backend subcommands
 	@echo "Backend (make back <cmd>):"
 	@grep -E '^back-[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/^back-/back /' | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-back-runserver: ## Start the backend only (runs migrate + runserver on :8000)
+back-runserver: ## Start the backend only (runs migrate + uvicorn ASGI on :8000)
 	$(COMPOSE) up --renew-anon-volumes backend
 
 back-makemigrations: ## Create new migrations (optionally: make back makemigrations app=notes)
