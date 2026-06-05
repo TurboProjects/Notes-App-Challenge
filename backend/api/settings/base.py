@@ -71,6 +71,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admin",
+    "django.contrib.postgres",  # SearchVectorField / FTS lookups (hybrid retrieval)
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
@@ -262,7 +263,43 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    # Per-user cap on question creation (cost guardrail; 429 + Retry-After).
+    "DEFAULT_THROTTLE_RATES": {"questions": "30/hour"},
 }
+
+# Messaging (RabbitMQ + transactional outbox/inbox — see ADR-0001)
+# -------------------------------------------------------------------------------
+RABBITMQ_URL = env("RABBITMQ_URL", default="amqp://guest:guest@rabbitmq:5672//")
+EVENTS_EXCHANGE = "notes.events"
+EVENTS_DLX = "notes.events.dlx"
+EVENTS_DELIVERY_LIMIT = 5
+# Postgres NOTIFY channels (outbox relay wake-up / SSE broadcaster)
+OUTBOX_NOTIFY_CHANNEL = "outbox_channel"
+QUESTION_EVENTS_CHANNEL = "question_events"
+
+# AI / RAG (see ADR-0002, ADR-0007)
+# -------------------------------------------------------------------------------
+# Per-role keys, no fallback (ADR-0007): embedding and generation are
+# configured independently — both must be set to enable the Ask pipeline.
+EMBEDDING_API_KEY = env("EMBEDDING_API_KEY", default="")
+GENERATION_API_KEY = env("GENERATION_API_KEY", default="")
+EMBEDDING_MODEL = env("EMBEDDING_MODEL", default="text-embedding-3-small")
+EMBEDDING_DIMENSIONS = 1536
+EMBEDDING_VERSION = env.int("EMBEDDING_VERSION", default=1)
+# Cheapest viable chat model; gpt-4.1-nano is the documented fallback (ADR-0007)
+GENERATION_MODEL = env("GENERATION_MODEL", default="gpt-5-nano")
+# Retrieval pipeline knobs (design D3: 30/30 → RRF k=60 → top-10 → neighbors ±1)
+RETRIEVAL_VECTOR_TOP_K = 30
+RETRIEVAL_FTS_TOP_K = 30
+RETRIEVAL_RRF_K = 60
+RETRIEVAL_FUSED_TOP_K = 10
+RETRIEVAL_NEIGHBOR_WINDOW = 1
+# Chunking (~500–800 tokens, ~15% overlap)
+CHUNK_TARGET_TOKENS = 650
+CHUNK_OVERLAP_RATIO = 0.15
+# SSE stream tickets (django.core.signing)
+STREAM_TICKET_SALT = "sse-stream-ticket"
+STREAM_TICKET_MAX_AGE = 30  # seconds
 
 # Frontend URL
 # -------------------------------------------------------------------------------
