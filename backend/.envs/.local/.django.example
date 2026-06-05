@@ -1,3 +1,7 @@
+# Template for backend/.envs/.local/.django
+# Copy to `.django` (or run `make setup`) and fill in the secrets below.
+# The real `.django` is gitignored: never commit credentials.
+
 # General
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
@@ -14,12 +18,11 @@ FRONTEND_BASE_URL=http://localhost:3000
 RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
 
 
-# AI / RAG — Ask Your Notes (ADR-0007)
+# AI / RAG: Ask Your Notes
 # ------------------------------------------------------------------------------
-# Per-role OpenAI keys (no fallback) — set BOTH to enable the pipeline:
 EMBEDDING_API_KEY=
 GENERATION_API_KEY=
 # Optional overrides (defaults shown):
 # EMBEDDING_MODEL=text-embedding-3-small
-# GENERATION_MODEL=gpt-5-nano    # fallback if streaming misbehaves: gpt-4.1-nano
+# GENERATION_MODEL=gpt-5-nano
 # EMBEDDING_VERSION=1

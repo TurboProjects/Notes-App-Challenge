@@ -24,7 +24,7 @@ ifneq (,$(filter back front,$(firstword $(MAKECMDGOALS))))
   $(eval $(SUBCMD):;@:)
 endif
 
-.PHONY: help build up down logs back front \
+.PHONY: help setup build up down logs back front \
 	back-runserver back-makemigrations back-migrate back-shell back-init \
 	back-test back-lint back-mypy back-sync back-help \
 	front-dev front-lint front-build front-shell front-install front-help
@@ -33,11 +33,19 @@ endif
 
 help: ## Show this help
 	@echo "Stack:"
-	@grep -E '^(help|build|up|down|logs|back|front):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(help|setup|build|up|down|logs|back|front):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@echo "Backend (make back <cmd>):"
 	@grep -E '^back-[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/^back-/back /' | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@echo "Frontend (make front <cmd>):"
 	@grep -E '^front-[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/^front-/front /' | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+
+setup: ## Create local env files from the .example templates (skips existing)
+	@for f in django postgres; do \
+		src=backend/.envs/.local/.$$f.example; dst=backend/.envs/.local/.$$f; \
+		if [ -f $$dst ]; then echo "exists, skipping $$dst"; \
+		else cp $$src $$dst && echo "created $$dst"; fi; \
+	done
+	@echo "→ Fill secrets in backend/.envs/.local/.django (EMBEDDING_API_KEY / GENERATION_API_KEY)."
 
 build: ## Build all docker images
 	$(COMPOSE) build
@@ -46,6 +54,9 @@ up: ## Start the full stack (backend :8000, frontend :3000, postgres)
 	# --renew-anon-volumes: refresh the /app/.venv anonymous volume from the
 	# image after a rebuild with new dependencies (otherwise it goes stale).
 	$(COMPOSE) up --renew-anon-volumes
+
+stop:
+	$(COMPOSE) stop
 
 down: ## Stop and remove containers
 	$(COMPOSE) down

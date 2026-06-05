@@ -1,0 +1,11 @@
+# Template for backend/.envs/.local/.postgres
+# Copy to `.postgres` (or run `make setup`). The real `.postgres` is gitignored.
+# These are LOCAL-DEV defaults only — change them for any non-local use.
+
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=backend
+POSTGRES_USER=backend
+POSTGRES_PASSWORD=backend

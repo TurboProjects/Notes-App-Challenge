@@ -128,6 +128,11 @@ celerybeat-schedule
 .env
 .envs/*
 !.envs/.local/
+# Real local env files live under backend/.envs/.local/ — keep them out of git,
+# track only the .example templates. (Patterns must be backend-anchored: the
+# rules above are repo-root-relative and never matched backend/.envs/.)
+backend/.envs/.local/*
+!backend/.envs/.local/*.example
 !.env.local
 .venv
 env/
