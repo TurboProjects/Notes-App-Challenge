@@ -1,7 +1,4 @@
-"""Unit tests for the ask-your-notes domain and use cases — fake ports, no DB.
-
-Spec: openspec/changes/add-ask-your-notes/specs/.
-"""
+"""Unit tests for the ask-your-notes domain and use cases: fake ports, no DB."""
 
 import asyncio
 
@@ -13,11 +10,13 @@ from api.notes.application.dtos import ReindexNoteCommand
 from api.notes.application.use_cases import AnswerQuestionUseCase
 from api.notes.application.use_cases import AskQuestionUseCase
 from api.notes.application.use_cases import ReindexNoteUseCase
+from api.notes.application.use_cases import RequestNoteIndexingUseCase
 from api.notes.application.use_cases.answer_question import NO_SOURCES_MESSAGE
 from api.notes.domain.chunking import split_into_chunks
 from api.notes.domain.entities import Question
 from api.notes.domain.value_objects import GeneratedAnswer
 from api.notes.domain.value_objects import RetrievedChunk
+from api.notes.domain.value_objects import sha256_of
 from api.notes.infrastructure.messaging.envelopes import MalformedPayloadError
 from api.notes.infrastructure.messaging.envelopes import parse_note_embed_requested
 from api.notes.infrastructure.messaging.envelopes import parse_question_asked
@@ -231,6 +230,14 @@ class FakeNoteIndex:
         self.content_hash = content_hash
         self.existing = existing or {}
         self.replaced = []
+        self.set_calls = []
+
+    def get_content_and_hash(self, *, note_id):
+        return self.content, self.content_hash
+
+    def set_content_hash(self, *, note_id, content_hash):
+        self.set_calls.append((note_id, content_hash))
+        self.content_hash = content_hash
 
     async def aget_note_content(self, *, note_id):
         return self.content, self.content_hash
@@ -240,6 +247,37 @@ class FakeNoteIndex:
 
     async def areplace_chunks(self, **kwargs):
         self.replaced.append(kwargs)
+
+
+class RequestNoteIndexingUseCaseTests(SimpleTestCase):
+    def test_unchanged_content_is_debounced(self):
+        content = "Stable note body."
+        index = FakeNoteIndex(content=content, content_hash=sha256_of(content))
+        outbox = FakeOutbox()
+        use_case = RequestNoteIndexingUseCase(notes_index=index, outbox=outbox)
+
+        emitted = use_case.execute(note_id=1)
+
+        self.assertFalse(emitted)
+        self.assertEqual(outbox.events, [])
+        self.assertEqual(index.set_calls, [])
+
+    def test_changed_content_sets_hash_and_emits(self):
+        index = FakeNoteIndex(content="New body.", content_hash="OLD")
+        outbox = FakeOutbox()
+        use_case = RequestNoteIndexingUseCase(notes_index=index, outbox=outbox)
+
+        emitted = use_case.execute(note_id=7)
+
+        self.assertTrue(emitted)
+        expected_hash = sha256_of("New body.")
+        self.assertEqual(index.set_calls, [(7, expected_hash)])
+        [(topic, correlation_id, payload)] = outbox.events
+        self.assertEqual(topic, "note.embed.requested")
+        self.assertEqual(correlation_id, "7")
+        self.assertEqual(payload["content_hash"], expected_hash)
+        self.assertEqual(payload["note_id"], 7)
+        self.assertEqual(payload["schema_version"], 1)
 
 
 class ReindexNoteUseCaseTests(SimpleTestCase):

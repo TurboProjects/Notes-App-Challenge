@@ -1,7 +1,4 @@
-"""Integration tests for the ask-your-notes API and repositories (real DB).
-
-Spec: openspec/changes/add-ask-your-notes/specs/ask-your-notes/spec.md.
-"""
+"""Integration tests for the ask-your-notes API and repositories (real DB)."""
 
 from django.core import signing
 from django.urls import reverse
@@ -217,36 +214,61 @@ class SaveAnswerRepositoryTests(APITestCase):
 
 
 class NoteIndexingTriggerTests(APITestCase):
+    """The re-index trigger lives in the application layer (the note
+    controller invokes RequestNoteIndexingUseCase), so these drive the real
+    API: not Note.objects.create (which no longer has side effects)."""
+
     def setUp(self):
         self.user = UserFactory()
+        self.client.force_authenticate(user=self.user)
         self.category = CategoryFactory()
+        self.list_url = reverse("note-list")
 
     def test_note_create_emits_embed_event(self):
-        note = Note.objects.create(
-            title="T",
-            content="Some content.",
-            category=self.category,
-            user=self.user,
+        response = self.client.post(
+            self.list_url,
+            {"title": "T", "content": "Some content.", "category_id": self.category.id},
         )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        note_id = response.data["id"]
+
         event = OutboxEvent.objects.get(topic="note.embed.requested")
-        self.assertEqual(event.correlation_id, str(note.id))
+        self.assertEqual(event.correlation_id, str(note_id))
+        note = Note.objects.get(id=note_id)
         self.assertEqual(event.payload["content_hash"], note.content_hash)
+        self.assertNotEqual(note.content_hash, "")  # persisted by the use case
 
     def test_title_only_edit_does_not_emit(self):
-        note = Note.objects.create(
-            title="T",
-            content="Same content.",
-            category=self.category,
-            user=self.user,
+        create = self.client.post(
+            self.list_url,
+            {"title": "T", "content": "Same content.", "category_id": self.category.id},
         )
+        note_id = create.data["id"]
         OutboxEvent.objects.all().delete()
 
-        note.title = "New title"
-        note.save()
+        detail_url = reverse("note-detail", args=[note_id])
+        response = self.client.patch(detail_url, {"title": "New title"})
 
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             OutboxEvent.objects.filter(topic="note.embed.requested").count(),
             0,
+        )
+
+    def test_content_edit_emits_again(self):
+        create = self.client.post(
+            self.list_url,
+            {"title": "T", "content": "First.", "category_id": self.category.id},
+        )
+        note_id = create.data["id"]
+        OutboxEvent.objects.all().delete()
+
+        detail_url = reverse("note-detail", args=[note_id])
+        self.client.patch(detail_url, {"content": "Second, different content."})
+
+        self.assertEqual(
+            OutboxEvent.objects.filter(topic="note.embed.requested").count(),
+            1,
         )
 
 
