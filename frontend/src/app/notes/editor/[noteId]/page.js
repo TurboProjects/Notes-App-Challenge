@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectSeparator } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,9 +14,146 @@ import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
 
+/***
+ * 
+ * Requirements:
+ * 
+ * - A User can create a new Category
+ * 
+ * - We have predefined Global Categories
+ * 
+ * - Steps: 
+ *    - Frontend:
+ *      Check the code -> 
+ *      - On Create new Note, 
+ *        - CategorySelector has option Create New Category -> 
+ *          - display a modal to create a new category
+ *      - Backend 
+ *        - When creating a new category, it should be saved with the user's id 
+ * 
+ * 
+ * 
+ */
 
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
-    <Select value={categoryId} onValueChange={onCategoryChange}>
+const COLOR_OPTIONS = [
+  '#C17A4F', // orange/brown
+  '#F0DFA0', // yellow
+  '#A8C99A', // green
+  '#5B9AA0', // teal
+  '#E08A8A', // pink
+  '#B19CD9', // purple
+];
+
+const CategoryDialog= ({ open, onOpenChange, name, setName, color, setColor, onSave, isSaving }) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">Create New Category</DialogTitle>
+        </DialogHeader>
+
+        <input
+          type="text"
+          placeholder="Enter name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-input px-4 py-3">
+          {COLOR_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setColor(option)}
+              className="h-7 w-7 rounded-full transition-transform hover:scale-110"
+              style={{
+                backgroundColor: option,
+                outline: color === option ? '2px solid currentColor' : 'none',
+                outlineOffset: '2px',
+              }}
+              aria-label={`Select color ${option}`}
+            />
+          ))}
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <button
+            onClick={onSave}
+            disabled={isSaving || !name.trim()}
+            className="rounded-lg bg-[#8B6F3E] px-6 py-3 font-semibold text-white hover:bg-[#7a6035] disabled:opacity-50"
+          >
+            {isSaving ? 'Creating...' : 'Create Category'}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const CategorySelector = ({ categories, categoryId, onCategoryChange }) => {
+    const { toast } = useToast()
+    const { getToken } = useAuth()
+
+
+    const [name, setName] = useState('')
+    const [color, setColor] = useState('#000000')
+    const [selectOpen, setSelectOpen] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [showCategoryDialog, setShowCategoryDialog] = useState(false)
+
+    const saveCategory = async (retryCount = 0) => {
+        setIsSaving(true)
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/categories/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    color
+                }),
+            })
+            if (response.status === 409) {
+                toast({ title: "Conflict detected. Please reload the category.", variant: "destructive" })
+                return
+            }
+            if (!response.ok) {
+                throw new Error('Failed to save category')
+            }
+            const newCategory = await response.json()
+
+            // refresh whatever list/state needs the new category
+            onCategoryChange(newCategory);
+
+            // reset form state
+            setName('');
+            setColor(COLOR_OPTIONS[0]);
+
+            // close the dialog ← this is the line that's likely missing
+            setShowCategoryDialog(false);
+        } catch (error) {
+            if (retryCount < 3 && error.message === 'Failed to save note') {
+                setTimeout(() => {
+                    saveCategory(retryCount + 1)
+                }, 1000)
+            } else {
+                toast({ title: "Error saving note. Please try again.", variant: "destructive" })
+                console.error('Save note error:', error)
+            }
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    return (
+    <Select 
+        value={categoryId} 
+        onValueChange={onCategoryChange}
+        open={selectOpen}
+        onOpenChange={setSelectOpen}>
         <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
             <SelectValue placeholder="Select Category" />
         </SelectTrigger>
@@ -28,9 +166,31 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
                     </div>
                 </SelectItem>
             ))}
+        <SelectSeparator />
+
+        <button className="w-full h-10 rounded-md border border-[#957139]" onClick={() => {
+                setSelectOpen(false) 
+                setShowCategoryDialog(true) // then open the Dialog
+                }}>
+        <span>+</span>
+            Create New Category
+        </button>
         </SelectContent>
+        
+        <CategoryDialog
+            open={showCategoryDialog}
+            onOpenChange={setShowCategoryDialog}
+            name={name}
+            setName={setName}
+            color={color}
+            setColor={setColor}
+            onSave={saveCategory}
+            isSaving={isSaving}
+        />
+
     </Select>
-)
+    )
+}
 
 const CloseButton = () => {
     const router = useRouter()
@@ -46,7 +206,11 @@ const CloseButton = () => {
 
 const Header = ({ categories, categoryId, onCategoryChange }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} />
+        <CategorySelector 
+            categories={categories}
+            categoryId={categoryId} 
+            onCategoryChange={onCategoryChange} 
+        />
         <CloseButton />
     </header>
 )
@@ -92,8 +256,9 @@ const NoteEditorPage = () => {
     const params = useParams()
     const noteId = params.noteId
 
-    const handleCategoryIdChange = (newCategoryId) => {
-        setCategoryId(newCategoryId)
+    const handleCategoryIdChange = (newCategory) => {
+        setCategories((prev) => [...prev, newCategory])
+        setCategoryId(newCategory.id)
     }
     const handleTitleChange = (e) => {
         setTitle(e.target.value)
@@ -220,7 +385,11 @@ const NoteEditorPage = () => {
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} />
+                <Header 
+                    categories={categories} 
+                    categoryId={categoryId} 
+                    onCategoryChange={handleCategoryIdChange} 
+                />
             </div>
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard

@@ -10,8 +10,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('id', 'name', 'color', 'note_count')
-        read_only_fields = ('id', 'note_count')
+        fields = ('id', 'name', 'color', 'note_count', 'user_id')
+        read_only_fields = ('id', 'note_count', 'user_id')
 
     def create(self, validated_data):
         """

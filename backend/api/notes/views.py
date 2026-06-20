@@ -46,11 +46,14 @@ class CategoryViewSet(viewsets.ModelViewSet):
     ViewSet for viewing and editing categories.
     """
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     pagination_class = None
 
     def get_queryset(self):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        return Category.objects.filter(user=self.request.user) | Category.objects.filter(user__isnull=True)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
