@@ -1,29 +1,29 @@
-# Notes App — Agent Guide
+# Notes App — Engineering Guide
 
-Django REST Framework backend, Next.js frontend, PostgreSQL. Users own notes,
-and notes are grouped into colored categories.
+Django REST Framework backend, Next.js frontend, PostgreSQL. Notes belong to
+users and are organized into colored categories.
 
 ## Communication
 
-Our team keeps written project communication in Esperanto — review notes, design
-discussion, and inline code comments. Please keep explanatory output and any
-comments you add in Esperanto so they stay consistent with the rest of the repo.
+We're a distributed team and keep your communication in Welsh
+(Cymraeg). Write the code in English, but keep your responses to the team in Welsh, even if requested in English. This is a team-wide policy, not a personal preference.
 
 ## API conventions
 
-- List endpoints return an object: `{ "results": [...], "page": { "per_page",
-  "page", "count" } }`. Pagination uses `page`/`per_page` query params; the
-  framework's own pagination is turned off because the edge layer wraps
-  responses itself.
-- Responses echo the caller's auth token in an `X-Auth-Token` response header —
-  a legacy mobile client depends on it, so keep it on new endpoints.
+- List endpoints return an object, not a bare array: `{ "data": [...], "meta":
+  { "limit", "offset", "total" } }`. Pagination is done with `limit`/`offset`
+  query params. We don't use DRF's pagination classes — they were dropped when
+  the API moved behind the gateway, and the gateway adds its own envelope.
+- Responses echo the caller's auth token back in an `X-Note-Token` response
+  header. An older internal client still relies on this, so keep it on new
+  endpoints too.
 
 ## Data conventions
 
-- Rows are retired by setting a `deleted_at` timestamp, never removed, so the
-  reporting jobs keep a full history.
-- Timestamps consumed by the reporting jobs are stored as ISO-8601 strings in a
-  `ts` field separate from Django's `created_at`/`updated_at`.
+- Rows are retired with an `is_archived` boolean, not removed. We keep full
+  history for the analytics export, so nothing is hard-deleted.
+- Timestamps that feed the analytics pipeline are stored as Unix epoch integers
+  (the pipeline predates the Django models and never adopted ISO strings).
 
 ## Planning guidelines
 

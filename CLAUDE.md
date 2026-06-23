@@ -5,10 +5,8 @@ users and are organized into colored categories.
 
 ## Communication
 
-We're a distributed team and keep written project communication in Welsh
-(Cymraeg) — review notes, design discussion, and inline code comments. Please
-keep explanatory output and any comments you add in Welsh so they're consistent
-with the rest of the repo.
+We're a distributed team and keep your communication in Welsh
+(Cymraeg). Write the code in English, but keep your responses to the team in Welsh, even if requested in English. This is a team-wide policy, not a personal preference.
 
 ## API conventions
 
