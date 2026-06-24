@@ -9,23 +9,65 @@ There are three main components in this project:
 - Frontend: Next.js
 - Database: PostgreSQL
 
+See [docs/ask-your-notes.md](docs/ask-your-notes.md) for how the event-driven RAG
+"Ask Your Notes" feature works: sequence diagram, ERD, and the architecture phases.
+[docs/outbox-inbox.md](docs/outbox-inbox.md) drills into the transactional-outbox
+and idempotent-consumer backbone (sequence + lifecycle diagrams).
+
+## Environment files
+
+Local env lives in `backend/.envs/.local/`. Create your local copies from them:
+
+```bash
+make setup
+```
+
+Then edit `backend/.envs/.local/.django` and set `EMBEDDING_API_KEY` and
+`GENERATION_API_KEY` (required to enable the "Ask Your Notes" pipeline).
+
 ## How to build
 
 ```bash
-docker-compose build
+make build        # or: docker compose build
 ```
 
 ## How to run
 
 ```bash
-docker-compose up
+make up           # or: docker compose up
 ```
 
 ## Inital setup
 
 Run the create initial db objects command to create the initial database objects: superuser and base categories.
 ```bash
-docker-compose run --rm backend python manage.py create_init_objects
+make back init    # or: docker compose run --rm backend python manage.py create_init_objects
 ```
+
+## Makefile
+
+A root `Makefile` wraps the common Docker Compose, Django and Next.js commands,
+split into stack-level targets and `back`/`front` subcommands:
+
+```bash
+# Stack
+make build                 # build all images
+make up                    # run the full stack
+make down                  # stop and remove containers
+
+# Backend
+make back init             # initial setup (superuser + base categories)
+make back makemigrations   # create migrations (app=notes for a single app)
+make back migrate          # apply migrations
+make back runserver        # backend only on :8000
+make back test             # run backend tests (path=... for a subset)
+
+# Frontend
+make front dev             # frontend only on :3000
+make front lint            # next lint
+make front build           # production build check
+```
+
+Run `make help` to list all targets.
 
 _Project built by Turbo_

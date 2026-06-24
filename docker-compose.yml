@@ -1,6 +1,7 @@
 volumes:
   679403a7__notes-app_backend_postgres_data: {}
   679403a7__notes-app_backend_postgres_data_backups: {}
+  679403a7__notes-app_rabbitmq_data: {}
 
 services:
   backend:
@@ -10,15 +11,78 @@ services:
     image: 679403a7__notes-app_backend_django
     container_name: 679403a7__notes-app_backend_django
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
       - ./backend:/app
+      # Don't mount the host .venv over the image's one (same pattern as
+      # the frontend's node_modules)
+      - /app/.venv
     env_file:
       - ./backend/.envs/.local/.django
       - ./backend/.envs/.local/.postgres
     ports:
       - '${BACKEND_PORT:-8000}:8000'
     command: /start
+
+  # Event-driven processes: reuse the backend image with a different command:
+  # one build, five processes.
+  outbox-relay:
+    image: 679403a7__notes-app_backend_django
+    container_name: 679403a7__notes-app_outbox_relay
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    env_file:
+      - ./backend/.envs/.local/.django
+      - ./backend/.envs/.local/.postgres
+    # watchfiles gives these management commands the same dev autoreload as
+    # uvicorn --reload (they have none on their own). NOTE: reloads CODE only:
+    # changing .envs/*.django still needs `up -d --force-recreate`.
+    command: ["watchfiles", "--filter", "python", "python manage.py run_outbox_relay", "api"]
+
+  rag-worker:
+    image: 679403a7__notes-app_backend_django
+    container_name: 679403a7__notes-app_rag_worker
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    env_file:
+      - ./backend/.envs/.local/.django
+      - ./backend/.envs/.local/.postgres
+    command: ["watchfiles", "--filter", "python", "python manage.py run_rag_worker", "api"]
+
+  embedding-worker:
+    image: 679403a7__notes-app_backend_django
+    container_name: 679403a7__notes-app_embedding_worker
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    env_file:
+      - ./backend/.envs/.local/.django
+      - ./backend/.envs/.local/.postgres
+    command: ["watchfiles", "--filter", "python", "python manage.py run_embedding_worker", "api"]
 
   frontend:
     build:
@@ -38,10 +102,34 @@ services:
     command: "npm run dev"
 
   postgres:
-    image: docker.io/postgres:16
+    # pgvector-enabled Postgres 16 (same PG16 data dir layout as postgres:16,
+    # so the existing volume is reusable; the image just ships the extension).
+    image: docker.io/pgvector/pgvector:pg16
     container_name: 679403a7__notes-app_backend_postgres
     volumes:
       - 679403a7__notes-app_backend_postgres_data:/var/lib/postgresql/data
       - 679403a7__notes-app_backend_postgres_data_backups:/backups
     env_file:
       - ./backend/.envs/.local/.postgres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    # Management UI on :15672 (guest/guest), live queues, DLQs, message rates.
+    # Exchanges/queues are declared idempotently by the consumers at startup,
+    # so boot order only matters through the healthcheck below.
+    image: docker.io/rabbitmq:4-management
+    container_name: 679403a7__notes-app_rabbitmq
+    volumes:
+      # Quorum queues are Raft-persisted; keep their state across restarts.
+      - 679403a7__notes-app_rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 5s
+      timeout: 10s
+      retries: 10
