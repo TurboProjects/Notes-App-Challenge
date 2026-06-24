@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ from api.users.permissions import IsOwnerOrReadOnly
 class NoteViewSet(viewsets.ModelViewSet):
     """
     ViewSet for viewing and editing notes.
-    
+
     list:
     Return a paginated list of notes that belong to the authenticated user.
     Optionally filter by category_id using query parameter.
@@ -23,13 +24,13 @@ class NoteViewSet(viewsets.ModelViewSet):
         optionally filtered by category_id, ordered by last updated.
         """
         queryset = Note.objects.filter(user=self.request.user)
-        
+
         category_id = self.request.query_params.get('category_id', None)
         if category_id is not None:
             # Verify category exists and belongs to user
             category = get_object_or_404(Category, id=category_id)
             queryset = queryset.filter(category=category)
-        
+
         return queryset.order_by('-updated_at')
 
     def get_object(self):
@@ -53,4 +54,4 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        return Category.objects.filter(Q(user=self.request.user) | Q(user__isnull=True))
