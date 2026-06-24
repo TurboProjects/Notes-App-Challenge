@@ -7,6 +7,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Field, FieldLabel, FieldContent } from "@/components/ui/field"
 import { Circle, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthProvider';
@@ -14,7 +17,111 @@ import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
 
 
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
+const CreateCategoryDialog = ({ onCategoryCreated, getToken, toast }) => {
+    /* list of colors */
+    const colorOptions = [
+        "#957139",
+        "#E74C3C",
+        "#3498DB",
+        "#2ECC71",
+        "#F39C12",
+        "#9B59B6"
+    ]
+
+    /* states */
+    const [open, setOpen] = useState(false)
+    const [categoryName, setCategoryName] = useState("")
+    const [categoryColor, setCategoryColor] = useState(colorOptions[0])
+    const [isCreating, setIsCreating] = useState(false)
+
+    /* API call */
+    const createCategory = async () => {
+        setIsCreating(true)
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/categories/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: categoryName,
+                    color: categoryColor
+                }),
+            })
+            if (!response.ok) {
+                throw new Error('Failed to create category')
+            }
+            const newCategory = await response.json()
+            if (onCategoryCreated) {
+                onCategoryCreated(newCategory)
+            }
+            setOpen(false) /* close modal after creation */
+            setCategoryName("") /* restore modal name input */
+            setCategoryColor(colorOptions[0]) /* restore modal color input */
+        } catch (error) {
+            toast({ title: "Error creating category. Please try again.", variant: "destructive" })
+            console.error('Create category error:', error)
+        } finally {
+            setIsCreating(false)
+        }
+    }
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        createCategory()
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    + Create New Category
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create New Category</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                    <Field>
+                        <FieldLabel htmlFor="category-name">Category Name</FieldLabel>
+                        <FieldContent>
+                            <Input id="category-name" value={categoryName} onChange={(e) => setCategoryName(e.target.value)}
+                                placeholder="Enter name" required
+                            />
+                        </FieldContent>
+                    </Field>
+                    <Field>
+                        <FieldLabel>Color</FieldLabel>
+                        <FieldContent>
+                            <div className="flex items-center space-x-3">
+                                {colorOptions.map((color) => (
+                                    <button key={color} onClick={() => setCategoryColor(color)}
+                                        style={{
+                                            width: '32px', height: '32px',
+                                            borderRadius: '32px', backgroundColor: color,
+                                            borderColor: "brown",
+                                            borderWidth: categoryColor === color ? '2px' : '0',
+                                            borderStyle: 'solid', cursor: 'pointer',
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </FieldContent>
+                    </Field>
+                    <div>
+                        <Button type="submit">
+                            Create Category
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+const CategorySelector = ({ categories, categoryId, onCategoryChange, onCategoryCreated, getToken, toast }) => (
     <Select value={categoryId} onValueChange={onCategoryChange}>
         <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
             <SelectValue placeholder="Select Category" />
@@ -28,6 +135,9 @@ const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
                     </div>
                 </SelectItem>
             ))}
+            <div>
+                <CreateCategoryDialog onCategoryCreated={onCategoryCreated} getToken={getToken} toast={toast} />
+            </div>
         </SelectContent>
     </Select>
 )
@@ -44,9 +154,16 @@ const CloseButton = () => {
     )
 }
 
-const Header = ({ categories, categoryId, onCategoryChange }) => (
+const Header = ({ categories, categoryId, onCategoryChange, onCategoryCreated, getToken, toast }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} />
+        <CategorySelector
+            categories={categories}
+            categoryId={categoryId}
+            onCategoryChange={onCategoryChange}
+            onCategoryCreated={onCategoryCreated}
+            getToken={getToken}
+            toast={toast}
+        />
         <CloseButton />
     </header>
 )
@@ -216,11 +333,23 @@ const NoteEditorPage = () => {
         return category ? category.color : 'gray'
     }, [categoryId, categories])
 
+    const handleCategoryCreated = (newCategory) => {
+        setCategories(prevCategories => [...prevCategories, newCategory])
+        setCategoryId(newCategory.id)
+    }
+
     // render
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} />
+                <Header
+                    categories={categories}
+                    categoryId={categoryId}
+                    onCategoryChange={handleCategoryIdChange}
+                    onCategoryCreated={handleCategoryCreated}
+                    getToken={getToken}
+                    toast={toast}
+                />
             </div>
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard

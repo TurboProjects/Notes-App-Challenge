@@ -53,4 +53,19 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        public_categories = Category.objects.filter(user=None)
+        user_categories = Category.objects.filter(user=self.request.user)
+        all_categories = public_categories | user_categories
+        return all_categories.order_by('name')
+
+    def get_object(self):
+        """
+        Retrieve a category by ID, ensuring it belongs to the authenticated user or is public.
+        """
+        obj = get_object_or_404(Category, id=self.kwargs['pk'])
+        if obj.user != self.request.user:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        return obj
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

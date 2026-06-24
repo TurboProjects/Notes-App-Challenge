@@ -14,10 +14,19 @@ class Category(models.Model):
         max_length=7,
         validators=[validate_hex_color]
     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='categories',
+        null=True,
+        blank=True,
+        default=None
+    )
 
     class Meta:
         verbose_name_plural = 'Categories'
         ordering = ['name']
+        unique_together = ('name', 'user')
 
     def __str__(self):
         return f"{self.name}"
