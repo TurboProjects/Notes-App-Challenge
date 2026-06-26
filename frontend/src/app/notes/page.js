@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import CategorySidebar from '@/components/CategorySidebar'
+import { AiAssistantModal } from '@/components/AiAssistantModal'
 
 // Helper function to format dates
 const formatDate = (date) => {
@@ -23,8 +24,8 @@ const formatDate = (date) => {
 
 // NewNoteButton component
 const NewNoteButton = ({ onClick }) => (
-    <Button 
-        onClick={onClick} 
+    <Button
+        onClick={onClick}
         className="bg-transparent text-[#95715e] border border-[#95715e] rounded-full px-4 py-2 flex items-center font-bold hover:bg-[#95715e] hover:text-white transition-colors"
     >
         <PlusIcon className="w-4 h-4 mr-2" />
@@ -61,10 +62,10 @@ NoteCard.displayName = 'NoteCard'
 const NoteGrid = ({ notes, lastNoteRef }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {notes.map((note, index) => (
-            <NoteCard 
-                key={note.id} 
-                note={note} 
-                ref={index === notes.length - 1 ? lastNoteRef : null} 
+            <NoteCard
+                key={note.id}
+                note={note}
+                ref={index === notes.length - 1 ? lastNoteRef : null}
             />
         ))}
     </div>
@@ -102,6 +103,9 @@ const NotesPage = () => {
     const { getToken } = useAuth()
     const { toast } = useToast()
     const router = useRouter()
+
+    // AI Assistant modal
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false)
 
     // categories
     const [categories, setCategories] = useState([])
@@ -156,7 +160,7 @@ const NotesPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Token ${getToken()}`, 
+                    'Authorization': `Token ${getToken()}`,
                 },
                 body: JSON.stringify({
                     category_id: defaultCategoryId
@@ -232,15 +236,15 @@ const NotesPage = () => {
     }, [])
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#faf1e4] font-sans">
+        <div className="flex flex-col min-h-screen bg-[#faf1e4] font-sans relative">
             <div className="flex justify-end p-4">
                 <NewNoteButton onClick={handleNewNote} />
             </div>
             <div className="flex flex-1">
-                <CategorySidebar 
-                    categories={categories} 
-                    loading={isLoadingCategories} 
-                    onSelectCategory={handleCategorySelect} 
+                <CategorySidebar
+                    categories={categories}
+                    loading={isLoadingCategories}
+                    onSelectCategory={handleCategorySelect}
                     selectedCategory={selectedCategory}
                 />
                 <MainContent
@@ -250,6 +254,25 @@ const NotesPage = () => {
                     lastNoteRef={lastNoteRef}
                 />
             </div>
+
+            <button
+                onClick={() => setIsAiModalOpen(true)}
+                className="fixed bottom-6 left-6 w-16 h-16 bg-[#8B9A6D] hover:bg-[#7a8a5c] rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-40"
+                title="Ask AI Assistant"
+            >
+                <Image
+                    src="/cactus.png"
+                    width={48}
+                    height={48}
+                    alt="AI Assistant"
+                    className="w-12 h-12"
+                />
+            </button>
+
+            <AiAssistantModal
+                isOpen={isAiModalOpen}
+                onClose={() => setIsAiModalOpen(false)}
+            />
         </div>
     )
 }

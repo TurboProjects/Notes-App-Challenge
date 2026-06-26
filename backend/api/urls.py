@@ -7,7 +7,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 from api.users.views import UserViewSet, RegistrationView
-from api.notes.views import NoteViewSet, CategoryViewSet
+from api.notes.views import NoteViewSet, CategoryViewSet, AIAssistantViewSet
 
 urlpatterns = [
     # Django Admin
@@ -20,6 +20,7 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'notes', NoteViewSet, basename='note')
+router.register(r'ai_assistant', AIAssistantViewSet, basename='ai_assistant')
 
 # API URLS
 urlpatterns += [
