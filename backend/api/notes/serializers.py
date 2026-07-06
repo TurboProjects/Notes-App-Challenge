@@ -18,7 +18,7 @@ class CategorySerializer(serializers.ModelSerializer):
         Create category with authenticated user
         """
         return super().create(validated_data)
-    
+
     def get_note_count(self, obj):
         user = self.context['request'].user if 'request' in self.context else None
         if user is None:
@@ -64,7 +64,7 @@ class NoteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "category_id": "Invalid category ID"
                 })
-        
+
         # Update other fields
         instance.title = validated_data.get('title', instance.title)
         instance.content = validated_data.get('content', instance.content)

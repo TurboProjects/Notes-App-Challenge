@@ -14,9 +14,17 @@ class Category(models.Model):
         max_length=7,
         validators=[validate_hex_color]
     )
+    # Global categories will have no user
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='categories'
+    )
 
     class Meta:
         verbose_name_plural = 'Categories'
+        unique_together = ['name', 'user']
         ordering = ['name']
 
     def __str__(self):
