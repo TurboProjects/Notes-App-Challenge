@@ -78,3 +78,82 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Cactus wrapper per Figma: outer circle 64x64 placed bottom-left (left:26px, bottom:8px)
+   image inside should be 40x47 positioned at top:8px left:11px within the wrapper */
+.cactus-wrapper {
+  position: fixed;
+  left: 20px; /* slightly shift left to keep visual alignment with larger size */
+  bottom: 8px;
+  width: 88px; /* increased per request */
+  height: 88px;
+  border-radius: 50%;
+  background-color: rgb(250 241 228 / var(--tw-bg-opacity)); /* Updated background color */
+  display: block;
+  padding: 60px; /* Added padding */
+  z-index: 50;
+  cursor: pointer;
+}
+.cactus-wrapper .cactus-image {
+  position: absolute;
+  top: 11px; /* adjusted to center within larger wrapper */
+  left: 16px;
+  width: 85px;
+  height: 85px;
+  object-fit: contain;
+  background: #B7B059; /* Updated background color for the cactus icon */
+  padding: 10px;
+  border-radius: 50%;
+}
+
+/* Modal styles for cactus UI */
+.cactus-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+.cactus-modal {
+  width: min(760px, 84%);
+  background: rgb(249 243 237);
+  border-radius: 28px;
+  padding: 22px 28px 44px; /* extra bottom padding so button fits inside */
+  position: relative;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+  display: block;
+  align-items: stretch;
+  overflow: visible;
+}
+.cactus-modal-textarea {
+  width: 100%;
+  min-height: 120px;
+  max-height: 240px;
+  resize: vertical;
+  padding: 18px 20px 18px 20px;
+  padding-right: 110px; /* leave room for circular send button so text doesn't go underneath */
+  padding-bottom: 80px; /* Ensure enough space for the send button */
+  border-radius: 18px;
+  background: transparent;
+  border: none; /* Removed border around the textarea */
+  font-size: 16px;
+  color: #3a2f24;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.cactus-modal-send {
+  position: absolute;
+  right: 20px;
+  bottom: 20px; /* Adjusted to provide more space */
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #B7B059; /* Updated background color for the question asking modal button */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+.cactus-modal-send svg { transform: translateY(-2px); }
+
