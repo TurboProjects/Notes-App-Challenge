@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Q
 from api.notes.models import Note, Category
 
 
@@ -7,18 +8,15 @@ class CategorySerializer(serializers.ModelSerializer):
     Serializer for Category model
     """
     note_count = serializers.SerializerMethodField()
+    # Read-only so the frontend can tell global (null) from personal categories.
+    # Ownership is assigned by the view, never by the client.
+    category_owner_user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Category
-        fields = ('id', 'name', 'color', 'note_count')
-        read_only_fields = ('id', 'note_count')
+        fields = ('id', 'name', 'color', 'note_count', 'category_owner_user')
+        read_only_fields = ('id', 'note_count', 'category_owner_user')
 
-    def create(self, validated_data):
-        """
-        Create category with authenticated user
-        """
-        return super().create(validated_data)
-    
     def get_note_count(self, obj):
         user = self.context['request'].user if 'request' in self.context else None
         if user is None:
@@ -39,15 +37,26 @@ class NoteSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at', 'user_id')
 
     def validate_category_id(self, value):
-        try:
-            category = Category.objects.get(id=value)
-            return value
-        except Category.DoesNotExist:
+        # Only allow attaching the user's own categories or global ones
+        # (category_owner_user is null). Prevents referencing another user's
+        # private category by id.
+        request = self.context.get('request')
+        user = request.user if request else None
+        category_qs = Category.objects.filter(
+            Q(category_owner_user=user) | Q(category_owner_user__isnull=True)
+        )
+        if not category_qs.filter(id=value).exists():
             raise serializers.ValidationError("Invalid category ID")
+        return value
 
     def create(self, validated_data):
         category_id = validated_data.pop('category_id')
-        category = Category.objects.get(id=category_id)
+        try:
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            raise serializers.ValidationError({
+                "category_id": "Invalid category ID"
+            })
         return Note.objects.create(
             category=category,
             **validated_data

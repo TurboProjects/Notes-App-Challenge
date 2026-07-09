@@ -4,7 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from api.notes.models import Note, Category
 from api.notes.serializers import NoteSerializer, CategorySerializer
-from api.users.permissions import IsOwnerOrReadOnly
+from api.users.permissions import IsOwnerOrReadOnly, IsCategoryOwnerOrReadOnly
+from django.db.models import Q
+
 
 class NoteViewSet(viewsets.ModelViewSet):
     """
@@ -26,8 +28,16 @@ class NoteViewSet(viewsets.ModelViewSet):
         
         category_id = self.request.query_params.get('category_id', None)
         if category_id is not None:
-            # Verify category exists and belongs to user
-            category = get_object_or_404(Category, id=category_id)
+            # Only allow filtering by a category the user can see (their own or
+            # a global one); an out-of-scope id 404s instead of leaking that it
+            # exists.
+            category = get_object_or_404(
+                Category.objects.filter(
+                    Q(category_owner_user=self.request.user)
+                    | Q(category_owner_user__isnull=True)
+                ),
+                id=category_id,
+            )
             queryset = queryset.filter(category=category)
         
         return queryset.order_by('-updated_at')
@@ -46,11 +56,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
     ViewSet for viewing and editing categories.
     """
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCategoryOwnerOrReadOnly]
     pagination_class = None
 
     def get_queryset(self):
         """
-        Filter queryset to return only user's categories.
+        Return the user's own categories plus global ones (no owner).
         """
-        return Category.objects.all()
+        filterQ = (
+            Q(category_owner_user=self.request.user)
+            | Q(category_owner_user__isnull=True)
+        )
+        return Category.objects.filter(filterQ)
+
+    def perform_create(self, serializer):
+        serializer.save(category_owner_user=self.request.user)

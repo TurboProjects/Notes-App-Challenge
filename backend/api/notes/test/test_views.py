@@ -21,27 +21,35 @@ class TestCategoryViewSet(APITestCase):
     def setUp(self):
         self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
-        self.category = CategoryFactory()
+        # The fixture category is owned by the authenticated user.
+        self.category = CategoryFactory(category_owner_user=self.user)
         Note.objects.create(title="Test Note", category=self.category, user=self.user)
         self.url = reverse('category-list')
 
     def test_list_categories(self):
-        """Test listing all public categories"""
+        """List returns the user's own categories plus global ones."""
+        global_category = CategoryFactory()  # category_owner_user is None
+        other_user_category = CategoryFactory(category_owner_user=UserFactory())
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['id'], self.category.id)
-        self.assertEqual(response.data[0]['note_count'], 1)
+        returned_ids = {c['id'] for c in response.data}
+        self.assertIn(self.category.id, returned_ids)
+        self.assertIn(global_category.id, returned_ids)
+        # Another user's private category must not be visible.
+        self.assertNotIn(other_user_category.id, returned_ids)
 
-    def test_create_category(self):
-        """Test creating a category"""
+    def test_create_category_sets_owner(self):
+        """Creating a category assigns the authenticated user as owner."""
         data = {'name': 'New Category', 'color': '#FF0000'}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['name'], data['name'])
+        self.assertEqual(str(response.data['category_owner_user']), str(self.user.id))
+        created = Category.objects.get(id=response.data['id'])
+        self.assertEqual(str(created.category_owner_user_id), str(self.user.id))
 
-    def test_update_category(self):
-        """Test updating a category"""
+    def test_update_own_category(self):
+        """A user can update their own category."""
         url = reverse('category-detail', kwargs={'pk': self.category.pk})
         data = {'name': 'Updated Category', 'color': '#00FF00'}
         response = self.client.put(url, data)
@@ -49,25 +57,45 @@ class TestCategoryViewSet(APITestCase):
         self.category.refresh_from_db()
         self.assertEqual(self.category.name, data['name'])
 
-    def test_delete_category(self):
-        """Test deleting a category"""
+    def test_delete_own_category(self):
+        """A user can delete their own category."""
         url = reverse('category-detail', kwargs={'pk': self.category.pk})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_access_any_category(self):
-        """Test that users can access any public category"""
-        other_category = CategoryFactory()
-        url = reverse('category-detail', kwargs={'pk': other_category.pk})
+    def test_read_global_category(self):
+        """Global categories are readable by any authenticated user."""
+        global_category = CategoryFactory()
+        url = reverse('category-detail', kwargs={'pk': global_category.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_update_any_category(self):
-        """Test that any user can update any category"""
-        other_category = CategoryFactory()
-        url = reverse('category-detail', kwargs={'pk': other_category.pk})
-        data = {'name': 'Updated Public Category', 'color': '#123456'}
+    def test_cannot_update_global_category(self):
+        """Global categories are read-only and cannot be edited."""
+        global_category = CategoryFactory()
+        url = reverse('category-detail', kwargs={'pk': global_category.pk})
+        data = {'name': 'Hijacked Global', 'color': '#123456'}
         response = self.client.put(url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        other_category.refresh_from_db()
-        self.assertEqual(other_category.name, data['name'])
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        global_category.refresh_from_db()
+        self.assertNotEqual(global_category.name, data['name'])
+
+    def test_cannot_delete_global_category(self):
+        """Global categories cannot be deleted by regular users."""
+        global_category = CategoryFactory()
+        url = reverse('category-detail', kwargs={'pk': global_category.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_cannot_access_other_users_category(self):
+        """Another user's private category is not accessible (404, out of scope)."""
+        other_category = CategoryFactory(category_owner_user=UserFactory())
+        url = reverse('category-detail', kwargs={'pk': other_category.pk})
+
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, status.HTTP_404_NOT_FOUND)
+
+        put_response = self.client.put(
+            url, {'name': 'Nope', 'color': '#123456'}
+        )
+        self.assertEqual(put_response.status_code, status.HTTP_404_NOT_FOUND)
