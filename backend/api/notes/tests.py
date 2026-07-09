@@ -134,6 +134,13 @@ class NoteCategoryFilterTests(APITestCase):
         response = self.client.get(f"{self.url}?category_id=99999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_filter_by_other_users_category(self):
+        """Filtering by another user's private category 404s (out of scope),
+        so its existence can't be probed via the 200-vs-404 difference."""
+        other_category = CategoryFactory(category_owner_user=UserFactory())
+        response = self.client.get(f"{self.url}?category_id={other_category.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_no_category_filter(self):
         """Test endpoint without category filter returns all user's notes"""
         response = self.client.get(self.url)

@@ -2,32 +2,42 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectSeparator } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Circle, X } from 'lucide-react'
+import { Circle, X, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
+import CategoryCreationModal from '@/components/CategoryCreationModal';
 
+// Sentinel value for the "Create New Category" option inside the Select.
+const NEW_CATEGORY_VALUE = "__new__"
 
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
-    <Select value={categoryId} onValueChange={onCategoryChange}>
+const CategorySelector = ({ categories, categoryId, onValueChange }) => (
+    <Select value={categoryId ? String(categoryId) : undefined} onValueChange={onValueChange}>
         <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
             <SelectValue placeholder="Select Category" />
         </SelectTrigger>
         <SelectContent>
             {categories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
+                <SelectItem key={category.id} value={String(category.id)}>
                     <div className="flex items-center">
                         <Circle className="w-4 h-4 mr-2" fill={category.color} strokeWidth={0} />
                         {category.name}
                     </div>
                 </SelectItem>
             ))}
+            <SelectSeparator />
+            <SelectItem value={NEW_CATEGORY_VALUE} className="text-[#957139] font-medium">
+                <div className="flex items-center">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Category
+                </div>
+            </SelectItem>
         </SelectContent>
     </Select>
 )
@@ -44,9 +54,9 @@ const CloseButton = () => {
     )
 }
 
-const Header = ({ categories, categoryId, onCategoryChange }) => (
+const Header = ({ categories, categoryId, onValueChange }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} />
+        <CategorySelector categories={categories} categoryId={categoryId} onValueChange={onValueChange} />
         <CloseButton />
     </header>
 )
@@ -92,8 +102,16 @@ const NoteEditorPage = () => {
     const params = useParams()
     const noteId = params.noteId
 
-    const handleCategoryIdChange = (newCategoryId) => {
-        setCategoryId(newCategoryId)
+
+
+    const handleCategorySelect = (value) => {
+        // The "Create New Category" option opens the modal instead of
+        // selecting a category.
+        if (value === NEW_CATEGORY_VALUE) {
+            setShowCategoryCreationModal(true)
+            return
+        }
+        setCategoryId(value)
     }
     const handleTitleChange = (e) => {
         setTitle(e.target.value)
@@ -184,6 +202,7 @@ const NoteEditorPage = () => {
     // categories
     const [categories, setCategories] = useState([])
     const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+    const [showCategoryCreationModal, setShowCategoryCreationModal] = useState(false)
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -211,8 +230,34 @@ const NoteEditorPage = () => {
         fetchCategories()
     }, [toast])
 
+    const handleCreateCategory = async ({ name, color }) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/categories/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, color }),
+            })
+            if (!response.ok) {
+                throw new Error('Failed to create category')
+            }
+            const newCategory = await response.json()
+            // Append to local state (no shared cache) and select the new category.
+            setCategories(prev => [...prev, newCategory])
+            setCategoryId(String(newCategory.id))
+            toast({ title: `Category "${newCategory.name}" created.` })
+            return true
+        } catch (error) {
+            console.error('Create category error:', error)
+            toast({ title: "Failed to create category. Please try again.", variant: "destructive" })
+            return false
+        }
+    }
+
     const currentCategoryColor = useMemo(() => {
-        const category = categories.find(cat => cat.id === categoryId)
+        const category = categories.find(cat => String(cat.id) === String(categoryId))
         return category ? category.color : 'gray'
     }, [categoryId, categories])
 
@@ -220,7 +265,7 @@ const NoteEditorPage = () => {
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} />
+                <Header categories={categories} categoryId={categoryId} onValueChange={handleCategorySelect} />
             </div>
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard
@@ -233,6 +278,12 @@ const NoteEditorPage = () => {
                     isSaving={isSaving}
                 />
             </div>
+
+            <CategoryCreationModal
+                open={showCategoryCreationModal}
+                onOpenChange={setShowCategoryCreationModal}
+                onCreate={handleCreateCategory}
+            />
         </div>
     )
 }

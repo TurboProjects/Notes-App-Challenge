@@ -28,6 +28,21 @@ class NoteAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Note.objects.count(), 0)
 
+    def test_create_note_own_category(self):
+        """A user can attach their own private category to a note"""
+        own_category = CategoryFactory(category_owner_user=self.user)
+        response = self.client.post(self.url, {'category_id': own_category.id})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['category']['id'], own_category.id)
+
+    def test_create_note_other_users_category(self):
+        """A user cannot attach another user's private category to a note"""
+        other_category = CategoryFactory(category_owner_user=UserFactory())
+        response = self.client.post(self.url, {'category_id': other_category.id})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('category_id', response.data)
+        self.assertEqual(Note.objects.count(), 0)
+
     def test_create_note_unauthenticated(self):
         """Test creating note without authentication"""
         self.client.force_authenticate(user=None)
@@ -71,6 +86,15 @@ class NotePatchTests(APITestCase):
         response = self.client.patch(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('category_id', response.data)
+
+    def test_patch_note_other_users_category(self):
+        """A user cannot reassign a note to another user's private category"""
+        other_category = CategoryFactory(category_owner_user=UserFactory())
+        response = self.client.patch(self.url, {'category_id': other_category.id})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('category_id', response.data)
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.category.id, self.category.id)
 
     def test_patch_other_user_note(self):
         """Test updating another user's note"""

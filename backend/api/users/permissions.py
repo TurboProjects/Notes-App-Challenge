@@ -23,3 +23,17 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
         return str(obj.user.id) == str(request.user.id)
 
+
+class IsCategoryOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Object-level permission for categories: everyone may read categories in
+    their queryset (own + global), but only the owning user may edit or delete.
+    Global categories (category_owner_user is None) are read-only for everyone.
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if obj.category_owner_user_id is None:
+            return False
+        return str(obj.category_owner_user_id) == str(request.user.id)
+
