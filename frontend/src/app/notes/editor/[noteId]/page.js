@@ -2,56 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectSeparator } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Circle, Plus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
-import { Button } from '@/components/ui/button'
+import { CategorySelector } from '@/components/notes/CategorySelector'
+import { NewCategoryDialog, CategoryColors } from '@/components/notes/NewCategoryDialog'
 
-
-const CREATE_CATEGORY_VALUE = "__create_new_category__"
-
-const CategoryColors = ["#EF9C66", "#FCDC94", "#C8CFA0", "#78ABA8", "#ED9AA2", "#B7A6D9"]
-
-const CategorySelector = ({ categories, categoryId, onCategoryChange, onCreateNew }) => (
-    <Select
-        value={categoryId}
-        onValueChange={(value) => {
-            if (value === CREATE_CATEGORY_VALUE) {
-                onCreateNew()
-                return
-            }
-            onCategoryChange(value)
-        }}
-    >
-        <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
-            <SelectValue placeholder="Select Category" />
-        </SelectTrigger>
-        <SelectContent>
-            {categories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center">
-                        <Circle className="w-4 h-4 mr-2" fill={category.color} strokeWidth={0} />
-                        {category.name}
-                    </div>
-                </SelectItem>
-            ))}
-            <SelectSeparator />
-            <SelectItem value={CREATE_CATEGORY_VALUE}>
-                <div className="flex items-center">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Category
-                </div>
-            </SelectItem>
-        </SelectContent>
-    </Select>
-)
 
 const CloseButton = () => {
     const router = useRouter()
@@ -76,56 +38,6 @@ const Header = ({ categories, categoryId, onCategoryChange, onCreateNew }) => (
         <CloseButton />
     </header>
 )
-
-const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorChange, onSubmit, isCreating }) => {
-    if (!open) return null
-    return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-            onClick={onClose}
-        >
-            <div
-                className="w-[440px] rounded-xl bg-[#faf1e3] p-6 shadow-lg"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">Create New Category</h2>
-                    <button type="button" aria-label="Close" onClick={onClose}>
-                        <X className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
-                </div>
-                <Input
-                    className="border-[#957139] mb-4 bg-transparent"
-                    placeholder="Enter name"
-                    value={name}
-                    onChange={(e) => onNameChange(e.target.value)}
-                    autoFocus
-                />
-                <div className="flex justify-between items-center rounded-md border border-[#957139] px-4 py-2.5 mb-6">
-                    {CategoryColors.map(paletteColor => (
-                        <button
-                            key={paletteColor}
-                            type="button"
-                            aria-label={`Select color ${paletteColor}`}
-                            className={`w-5 h-5 rounded-full ${color === paletteColor ? 'ring-2 ring-offset-2 ring-[#957139]' : ''}`}
-                            style={{ backgroundColor: paletteColor }}
-                            onClick={() => onColorChange(paletteColor)}
-                        />
-                    ))}
-                </div>
-                <div className="flex justify-end">
-                    <Button
-                        className="bg-[#957139] hover:bg-[#7a5c2e] text-white"
-                        onClick={onSubmit}
-                        disabled={isCreating || !name.trim()}
-                    >
-                        {isCreating ? "Creating..." : "Create Category"}
-                    </Button>
-                </div>
-            </div>
-        </div>
-    )
-}
 
 const NoteCard = ({ color, title, content, onTitleChange, onContentChange, lastEdited, isSaving }) => (
     <Card className="rounded-xl shadow-md border-2 h-full"
