@@ -1,4 +1,3 @@
-// jsdom lacks these APIs, which Radix UI components rely on
 class ResizeObserverStub {
   observe() {}
   unobserve() {}

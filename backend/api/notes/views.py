@@ -28,7 +28,6 @@ class NoteViewSet(viewsets.ModelViewSet):
         
         category_id = self.request.query_params.get('category_id', None)
         if category_id is not None:
-            # Verify category exists and is visible to the user
             category = get_object_or_404(
                 Category.objects.filter(Q(user=self.request.user) | Q(user__isnull=True)),
                 id=category_id

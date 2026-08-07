@@ -10,8 +10,6 @@ const CategoryColors = ["#EF9C66", "#FCDC94", "#C8CFA0", "#78ABA8", "#ED9AA2", "
 const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorChange, onSubmit, isCreating }) => {
     const inputRef = useRef(null)
 
-    // Document-level listener and deferred focus: the category dropdown
-    // restores focus to its trigger after closing, stealing it from the dialog
     useEffect(() => {
         if (!open) return
         const handleKeyDown = (e) => { if (e.key === 'Escape') onClose() }

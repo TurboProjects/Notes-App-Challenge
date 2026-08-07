@@ -80,7 +80,6 @@ const NoteEditorPage = () => {
     const params = useParams()
     const noteId = params.noteId
 
-    // create category
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [newCategoryName, setNewCategoryName] = useState("")
     const [newCategoryColor, setNewCategoryColor] = useState(CategoryColors[0])
