@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -8,12 +8,26 @@ import { Button } from "@/components/ui/button"
 const CategoryColors = ["#EF9C66", "#FCDC94", "#C8CFA0", "#78ABA8", "#ED9AA2", "#B7A6D9"]
 
 const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorChange, onSubmit, isCreating }) => {
+    const inputRef = useRef(null)
+
+    // Document-level listener and deferred focus: the category dropdown
+    // restores focus to its trigger after closing, stealing it from the dialog
+    useEffect(() => {
+        if (!open) return
+        const handleKeyDown = (e) => { if (e.key === 'Escape') onClose() }
+        document.addEventListener('keydown', handleKeyDown)
+        const focusTimer = setTimeout(() => inputRef.current?.focus(), 0)
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown)
+            clearTimeout(focusTimer)
+        }
+    }, [open, onClose])
+
     if (!open) return null
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
             onClick={onClose}
-            onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
         >
             <div
                 className="w-[440px] rounded-xl bg-[#faf1e3] p-6 shadow-lg"
@@ -26,6 +40,7 @@ const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorCh
                     </button>
                 </div>
                 <Input
+                    ref={inputRef}
                     className="border-[#957139] mb-4 bg-transparent"
                     placeholder="Enter name"
                     value={name}
@@ -33,7 +48,6 @@ const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorCh
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !isCreating && name.trim()) onSubmit()
                     }}
-                    autoFocus
                 />
                 <div className="flex justify-between items-center rounded-md border border-[#957139] px-4 py-2.5 mb-6">
                     {CategoryColors.map(paletteColor => (

@@ -86,10 +86,18 @@ describe('NewCategoryDialog', () => {
         expect(defaultProps.onSubmit).not.toHaveBeenCalled()
     })
 
-    it('closes on Escape', () => {
+    it('closes on Escape even when focus is outside the dialog', () => {
         renderDialog()
-        fireEvent.keyDown(screen.getByPlaceholderText('Enter name'), { key: 'Escape' })
+        fireEvent.keyDown(document.body, { key: 'Escape' })
         expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('focuses the name input when opened', () => {
+        jest.useFakeTimers()
+        renderDialog()
+        jest.runAllTimers()
+        expect(screen.getByPlaceholderText('Enter name')).toHaveFocus()
+        jest.useRealTimers()
     })
 
     it('closes when clicking the overlay but not the dialog itself', () => {
