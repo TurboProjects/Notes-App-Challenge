@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 from api.notes.models import Note, Category
 
@@ -10,15 +11,24 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('id', 'name', 'color', 'note_count')
-        read_only_fields = ('id', 'note_count')
+        fields = ('id', 'name', 'color', 'note_count', 'user_id')
+        read_only_fields = ('id', 'note_count', 'user_id')
 
-    def create(self, validated_data):
-        """
-        Create category with authenticated user
-        """
-        return super().create(validated_data)
-    
+    def validate(self, attrs):
+        name = (attrs.get('name') or '').strip()
+        if not name:
+            raise serializers.ValidationError({'name': 'Name cannot be empty'})
+        attrs['name'] = name
+
+        user = self.context['request'].user
+        duplicates = Category.objects.filter(user=user, name=name)
+        if self.instance:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise serializers.ValidationError({'name': 'You already have a category with this name'})
+        return attrs
+
+
     def get_note_count(self, obj):
         user = self.context['request'].user if 'request' in self.context else None
         if user is None:
@@ -39,11 +49,11 @@ class NoteSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at', 'user_id')
 
     def validate_category_id(self, value):
-        try:
-            category = Category.objects.get(id=value)
-            return value
-        except Category.DoesNotExist:
+        user = self.context['request'].user
+        accessible = Category.objects.filter(Q(user=user) | Q(user__isnull=True))
+        if not accessible.filter(id=value).exists():
             raise serializers.ValidationError("Invalid category ID")
+        return value
 
     def create(self, validated_data):
         category_id = validated_data.pop('category_id')

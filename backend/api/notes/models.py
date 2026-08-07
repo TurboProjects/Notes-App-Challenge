@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from api.notes.validators import validate_hex_color
-
+from api.users.models import User
 
 class Category(models.Model):
     """
@@ -14,10 +14,25 @@ class Category(models.Model):
         max_length=7,
         validators=[validate_hex_color]
     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='categories',
+        null=True,
+        blank=True
+    )
+    
 
     class Meta:
         verbose_name_plural = 'Categories'
         ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'name'], 
+                name='unique_user_category_name'
+            )
+        ]
+        
 
     def __str__(self):
         return f"{self.name}"

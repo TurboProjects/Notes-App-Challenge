@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from api.notes.models import Note, Category
 from api.notes.serializers import NoteSerializer, CategorySerializer
 from api.users.permissions import IsOwnerOrReadOnly
+from django.db.models import Q
+
 
 class NoteViewSet(viewsets.ModelViewSet):
     """
@@ -26,8 +28,10 @@ class NoteViewSet(viewsets.ModelViewSet):
         
         category_id = self.request.query_params.get('category_id', None)
         if category_id is not None:
-            # Verify category exists and belongs to user
-            category = get_object_or_404(Category, id=category_id)
+            category = get_object_or_404(
+                Category.objects.filter(Q(user=self.request.user) | Q(user__isnull=True)),
+                id=category_id
+            )
             queryset = queryset.filter(category=category)
         
         return queryset.order_by('-updated_at')
@@ -46,11 +50,14 @@ class CategoryViewSet(viewsets.ModelViewSet):
     ViewSet for viewing and editing categories.
     """
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     pagination_class = None
 
     def get_queryset(self):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        return Category.objects.filter(Q(user=self.request.user) | Q(user__isnull=True))
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

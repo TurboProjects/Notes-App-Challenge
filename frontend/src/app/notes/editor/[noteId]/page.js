@@ -2,35 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Circle, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthProvider';
 import withAuth from '@/hoc/withAuth';
 import { formatDate } from '@/lib/utils';
+import { CategorySelector } from '@/components/notes/CategorySelector'
+import { NewCategoryDialog, CategoryColors } from '@/components/notes/NewCategoryDialog'
 
-
-const CategorySelector = ({ categories, categoryId, onCategoryChange }) => (
-    <Select value={categoryId} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-[240px] h-10 rounded-md border border-[#957139]">
-            <SelectValue placeholder="Select Category" />
-        </SelectTrigger>
-        <SelectContent>
-            {categories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center">
-                        <Circle className="w-4 h-4 mr-2" fill={category.color} strokeWidth={0} />
-                        {category.name}
-                    </div>
-                </SelectItem>
-            ))}
-        </SelectContent>
-    </Select>
-)
 
 const CloseButton = () => {
     const router = useRouter()
@@ -44,9 +27,14 @@ const CloseButton = () => {
     )
 }
 
-const Header = ({ categories, categoryId, onCategoryChange }) => (
+const Header = ({ categories, categoryId, onCategoryChange, onCreateNew }) => (
     <header className="flex justify-between items-center mb-4">
-        <CategorySelector categories={categories} categoryId={categoryId} onCategoryChange={onCategoryChange} />
+        <CategorySelector
+            categories={categories}
+            categoryId={categoryId}
+            onCategoryChange={onCategoryChange}
+            onCreateNew={onCreateNew}
+        />
         <CloseButton />
     </header>
 )
@@ -91,6 +79,12 @@ const NoteEditorPage = () => {
     const [isSaving, setIsSaving] = useState(false)
     const params = useParams()
     const noteId = params.noteId
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [newCategoryName, setNewCategoryName] = useState("")
+    const [newCategoryColor, setNewCategoryColor] = useState(CategoryColors[0])
+    const [isCreating, setIsCreating] = useState(false)
+
 
     const handleCategoryIdChange = (newCategoryId) => {
         setCategoryId(newCategoryId)
@@ -152,7 +146,42 @@ const NoteEditorPage = () => {
             setIsSaving(false)
         }
     }
+    const createCategory = async () => {
+        const name = newCategoryName.trim()
+        if (!name || isCreating) return
+        setIsCreating(true)
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/categories/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${getToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    color: newCategoryColor,
+                }),
+            })
+            const data = await response.json().catch(() => null)
+            if (!response.ok) {
+                const message = data?.name?.[0] || data?.detail || "Error creating category. Please try again."
+                toast({ title: message, variant: "destructive" })
+                return
+            }
+            setCategories(prev => [...prev, data])
+            setCategoryId(data.id)
+            setIsDialogOpen(false)
+            setNewCategoryName("")
+            setNewCategoryColor(CategoryColors[0])
+        } catch (error) {
+            toast({ title: "Error creating category. Please try again.", variant: "destructive" })
+            console.error('Create category error:', error)
+        } finally {
+            setIsCreating(false)
+        }
+    }
 
+    
     useEffect(() => {
         const fetchNote = async () => {
             try {
@@ -220,8 +249,23 @@ const NoteEditorPage = () => {
     return (
         <div className="bg-[#faf1e3] h-screen flex flex-col">
             <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-8 lg:pt-12">
-                <Header categories={categories} categoryId={categoryId} onCategoryChange={handleCategoryIdChange} />
+                <Header
+                    categories={categories}
+                    categoryId={categoryId}
+                    onCategoryChange={handleCategoryIdChange}
+                    onCreateNew={() => setIsDialogOpen(true)}
+                />
             </div>
+            <NewCategoryDialog
+                open={isDialogOpen}
+                onClose={() => setIsDialogOpen(false)}
+                name={newCategoryName}
+                onNameChange={setNewCategoryName}
+                color={newCategoryColor}
+                onColorChange={setNewCategoryColor}
+                onSubmit={createCategory}
+                isCreating={isCreating}
+            />
             <div className="px-4 md:px-8 lg:px-12 pb-4 md:pb-8 lg:pb-12 flex-1">
                 <NoteCard
                     color={currentCategoryColor}
