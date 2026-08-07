@@ -28,8 +28,11 @@ class NoteViewSet(viewsets.ModelViewSet):
         
         category_id = self.request.query_params.get('category_id', None)
         if category_id is not None:
-            # Verify category exists and belongs to user
-            category = get_object_or_404(Category, id=category_id)
+            # Verify category exists and is visible to the user
+            category = get_object_or_404(
+                Category.objects.filter(Q(user=self.request.user) | Q(user__isnull=True)),
+                id=category_id
+            )
             queryset = queryset.filter(category=category)
         
         return queryset.order_by('-updated_at')
@@ -48,7 +51,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     ViewSet for viewing and editing categories.
     """
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     pagination_class = None
 
     def get_queryset(self):

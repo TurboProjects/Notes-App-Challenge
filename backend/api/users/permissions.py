@@ -16,10 +16,11 @@ class IsUserOrReadOnly(permissions.BasePermission):
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
-    Custom permission to only allow owners of a category to edit it.
+    Custom permission to only allow owners of an object to edit it.
+    Objects without an owner (e.g. global categories) are read-only.
     """
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return str(obj.user.id) == str(request.user.id)
+        return obj.user_id is not None and str(obj.user_id) == str(request.user.id)
 
