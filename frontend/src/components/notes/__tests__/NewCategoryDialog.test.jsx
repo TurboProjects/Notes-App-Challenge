@@ -72,6 +72,26 @@ describe('NewCategoryDialog', () => {
         expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
     })
 
+    it('submits on Enter in the name input when the name is valid', () => {
+        renderDialog({ name: 'Drama' })
+        fireEvent.keyDown(screen.getByPlaceholderText('Enter name'), { key: 'Enter' })
+        expect(defaultProps.onSubmit).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not submit on Enter while the name is empty or creating', () => {
+        renderDialog({ name: '' })
+        fireEvent.keyDown(screen.getByPlaceholderText('Enter name'), { key: 'Enter' })
+        renderDialog({ name: 'Drama', isCreating: true })
+        fireEvent.keyDown(screen.getAllByPlaceholderText('Enter name')[1], { key: 'Enter' })
+        expect(defaultProps.onSubmit).not.toHaveBeenCalled()
+    })
+
+    it('closes on Escape', () => {
+        renderDialog()
+        fireEvent.keyDown(screen.getByPlaceholderText('Enter name'), { key: 'Escape' })
+        expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+    })
+
     it('closes when clicking the overlay but not the dialog itself', () => {
         const { container } = renderDialog()
         fireEvent.click(screen.getByRole('heading', { name: 'Create New Category' }))

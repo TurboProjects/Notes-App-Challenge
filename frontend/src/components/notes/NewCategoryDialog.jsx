@@ -13,6 +13,7 @@ const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorCh
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
             onClick={onClose}
+            onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
         >
             <div
                 className="w-[440px] rounded-xl bg-[#faf1e3] p-6 shadow-lg"
@@ -29,6 +30,9 @@ const NewCategoryDialog = ({ open, onClose, name, onNameChange, color, onColorCh
                     placeholder="Enter name"
                     value={name}
                     onChange={(e) => onNameChange(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !isCreating && name.trim()) onSubmit()
+                    }}
                     autoFocus
                 />
                 <div className="flex justify-between items-center rounded-md border border-[#957139] px-4 py-2.5 mb-6">
