@@ -26,10 +26,11 @@ class Command(BaseCommand):
           
         try:
             for category in default_categories:
-                Category.objects.create(
-                    name=category["name"],
-                    color=category["color"]
-                )
+                if not Category.objects.filter(user__isnull=True, name=category["name"]).exists():
+                    Category.objects.create(
+                        name=category["name"],
+                        color=category["color"]
+                    )
             self.stdout.write(self.style.SUCCESS("Default categories created successfully!"))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Failed to create default categories: {str(e)}"))

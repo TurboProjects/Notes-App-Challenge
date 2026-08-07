@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from api.notes.models import Note, Category
 from api.notes.serializers import NoteSerializer, CategorySerializer
 from api.users.permissions import IsOwnerOrReadOnly
+from django.db.models import Q
+
 
 class NoteViewSet(viewsets.ModelViewSet):
     """
@@ -53,4 +55,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """
         Filter queryset to return only user's categories.
         """
-        return Category.objects.all()
+        return Category.objects.filter(Q(user=self.request.user) | Q(user__isnull=True))
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

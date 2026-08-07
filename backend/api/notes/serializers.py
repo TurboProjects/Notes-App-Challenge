@@ -10,15 +10,24 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('id', 'name', 'color', 'note_count')
-        read_only_fields = ('id', 'note_count')
+        fields = ('id', 'name', 'color', 'note_count', 'user_id')
+        read_only_fields = ('id', 'note_count', 'user_id')
 
-    def create(self, validated_data):
-        """
-        Create category with authenticated user
-        """
-        return super().create(validated_data)
-    
+    def validate(self, attrs):
+        name = (attrs.get('name') or '').strip()
+        if not name:
+            raise serializers.ValidationError({'name': 'Name cannot be empty'})
+        attrs['name'] = name
+
+        user = self.context['request'].user
+        duplicates = Category.objects.filter(user=user, name=name)
+        if self.instance:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise serializers.ValidationError({'name': 'You already have a category with this name'})
+        return attrs
+
+
     def get_note_count(self, obj):
         user = self.context['request'].user if 'request' in self.context else None
         if user is None:
